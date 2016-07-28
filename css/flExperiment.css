@@ -1,0 +1,20 @@
+#rightSide { 
+    left: 400px;              
+    border-left: 1px solid black;
+  }
+div {
+    position:absolute;
+    }
+img {
+  position:absolute;
+}
+#rightSide, #leftSide {
+    width:400px;
+    height:100%;
+    min-height: 400px;
+  }
+
+  :root:before {
+  content: url(../videos/fr_vid1.mp4)
+           url(../videos/fr_vid2.mp4)
+           url(../videos/fr_vid3.mp4);}
