@@ -79,16 +79,18 @@ function init()
 		media: endText,
 		clicks: 1
 	}];
+
+
 	var choice = [{type:'choice', media: [{
 		type: 'click',
 		media: leftMedia,
-		clicks: 5
+		clicks: 1
 	},{
 		type: 'click',
 		media: rightMedia,
-		clicks: 5
+		clicks: 1
 	}], timeoutMinutes: 1 }];
-	var timeline = warmUp;
+	var timeline = choice;
 	var results = buildInitialRes(left, right);
 	timeBegin = Date.now();
 	console.log(runTrial(timeline, 0, results));
@@ -104,7 +106,8 @@ function runTrial(timeline, i, results)
 	console.log("current trial:", trial)
 	if(trial.type === 'choice')
 	{
-		choice(timeline, trialData, i, results, function(){
+		choice(trial, trialData, results, function(){
+			scrub(trial);
 			return runTrial(timeline, ++i, results);
 		});
 	}
@@ -128,9 +131,34 @@ function runTrial(timeline, i, results)
 	}
 
 }
-function choice(timeline, trialData, i, results)
+//this removes all event handlers and turns everything off
+function scrub(trial)
 {
-	click(timeline, trialData, i, results);
+	for(var x = 0; x < trial.media.length; x++)
+	{
+		$(trial.media[x].media.image).off();
+		$(trial.media[x].media.image).hide();
+		$(trial.media[x].media.videos).off();
+		$(trial.media[x].media.videos).hide();
+		$('#mediaPane').hide();
+	}
+}
+function choice(trial, trialData, results, callback)
+{
+	//console.log('trialdata:', trialData);
+	setTimeout(function() {callback()}, 100 * 60 * trial.timeoutMinutes);
+	click(trial.media[0].media.image, trial.media[0].clicks, trialData, results, function(){
+		$(trial.media[1].media.image).hide();
+		reward(trial.media[0].media.videos, trialData, results, function(){
+			choice(trial, trialData, results, callback);
+		});
+	});
+	click(trial.media[1].media.image, trial.media[1].clicks, trialData, results, function(){
+		$(trial.media[0].media.image).hide();
+		reward(trial.media[1].media.videos, trialData, results, function(){
+			choice(trial, trialData, results, callback);
+		});
+	});
 }
 function click(media, maxClicks, trialData, results, callback)
 {

@@ -6,9 +6,12 @@
 
 #To do
 
-* Test that the butterflies really keep to their own side of the screen
-* preload videos
-* Set backgrounds
+* build test framework
+* Set background colours
+* randomly choose from array of videos
+* randomly get the set of clicks
+
+
 
 #Experiment Description
 It is a touch screen task where children just touch one of two different images on the left or right, and then the images disappear and some little video-cartoon plays in the middle of the screen depending on which image was touched.  For now, just find whatever 11 second clips on the internet of that can be replaced with other animation-video files once I get that right videos worked out. But work out the structure of how to display them, etc.
