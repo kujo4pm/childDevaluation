@@ -1,3 +1,7 @@
+body
+{
+  font-family: Arial, Helvetica, sans-serif;
+}
 #mainContainer
 {
   width:100%;
@@ -9,15 +13,41 @@
   left:0;
 }
 div {
-    position:absolute;
-    }
+  position:absolute;
+}
 img {
   position:absolute;
 }
-  :root:before {
+:root:before {
   content: url(../videos/fr_vid1.mp4)
-           url(../videos/fr_vid2.mp4)
-           url(../videos/fr_vid3.mp4)
-           url(../videos/nm_vid1.mp4)
-           url(../videos/nm_vid2.mp4)
-           url(../videos/nm_vid3.mp4);}
+  url(../videos/fr_vid2.mp4)
+  url(../videos/fr_vid3.mp4)
+  url(../videos/nm_vid1.mp4)
+  url(../videos/nm_vid2.mp4)
+  url(../videos/nm_vid3.mp4);}
+  #mediaPane
+  {
+    border-width: 1px;
+    border-color: black;
+    border-style: solid;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, -50%);
+    height:80%;
+    width:80%;
+
+  }
+  .rewardVid
+  {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, -50%);
+  }
+  .instruct
+  {
+
+  }

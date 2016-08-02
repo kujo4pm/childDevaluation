@@ -25,3 +25,6 @@ var videos = [ {
 	name: 'nemo',
 	files: ['nm_vid1.mp4', 'nm_vid2.mp4', 'nm_vid3.mp4']
 }];
+
+
+var DEBUG = true;
