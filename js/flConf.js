@@ -15,7 +15,7 @@ var sideWidth = $('#mainContainer').width() / 2;
 var sideHeight = $('#mainContainer').height();
 var imageWidth = 172;
 var imageHeight = 109; 
-var images = ['green_butterfly.jpg', 'red_butterfly.jpg'];
+var images = ['green_butterfly.gif', 'red_butterfly.gif'];
 var sides = ['left', 'right'];
 var videos = [ {
 	name: 'frozen',
@@ -28,3 +28,8 @@ var videos = [ {
 
 
 var DEBUG = true;
+
+var GREY = '#c2c2a3';
+var BLUE = '#99ccff';
+
+var timeBegin;

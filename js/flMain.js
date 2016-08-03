@@ -1,6 +1,3 @@
-var timeBegin;
-
-
 function init()
 {
 	//These are set for each subject and remain the same
@@ -28,60 +25,36 @@ function init()
 
 	
 	// below is the experiment separated into trials
-	var warmUp = [
-	{
-		type: 'text',
-		media: introText,
-		clicks: 1
-	},
-	{
-		type: 'click',
-		media: leftMedia,
-		clicks: 6
-	},
-	{
-		type: 'reward',
-		media: leftMedia,
-		clicks: 1
-	},
-	{
-		type: 'click',
-		media: leftMedia,
-		clicks: 1
-	},
-	{
-		type: 'reward',
-		media: leftMedia,
-		clicks: 1
-	},
-	{
-		type: 'click',
-		media: rightMedia,
-		clicks: 1
-	},
-	{
-		type: 'reward',
-		media: rightMedia,
-		clicks: 1
-	},
-	{
-		type: 'click',
-		media: rightMedia,
-		clicks: 1
-	},
-	{
-		type: 'reward',
-		media: rightMedia,
-		clicks: 1
-	},
-	{
-		type: 'text',
-		media: endText,
-		clicks: 1
-	}];
+	var warmUpPhase = [
+	{	type: 'text',  media: introText, clicks: 1},
+	{	type: 'click', media: leftMedia,clicks: 1},
+	{ 	type: 'reward',media: leftMedia},
+	{	type: 'click', media: leftMedia,clicks: 1},
+	{ 	type: 'reward',media: leftMedia},
+	{	type: 'click', media: rightMedia,clicks: 1},
+	{ 	type: 'reward',media: rightMedia},
+	{	type: 'click', media: rightMedia,clicks: 1},
+	{ 	type: 'reward',media: rightMedia},
+	{	type: 'text', media: endText, clicks: 1}];
 
 
-	var choice = [{type:'choice', media: [{
+	/*
+	Single-action phase. Part A.
+	Then there are 8 more trials like this, but with this pseudo-random sequence:
+	RLRRLLRL 
+	Single action phase Part B.
+	Then there are 8 more trials with this sequence:
+	LRRLRLLR 
+	But for these 8 trials, it should take between 1 and 5 touches (vary randomly for each trial) for the video to play.
+	*/
+
+	var L = [{type: 'click',media: leftMedia,clicks: 5},
+	{type: 'reward',media: leftMedia}];
+	var R = [{type: 'click',media: rightMedia,clicks: 5},
+	{type: 'reward',media: rightMedia}];
+	var singleActionPhaseA = [].concat(R,L,R,R,L,L,R,L);
+	var singleActionPhaseB = [].concat(L,R,R,L,R,L,L,R);
+	var choicePhase = [{type:'choice', media: [{
 		type: 'click',
 		media: leftMedia,
 		clicks: 1
@@ -89,11 +62,45 @@ function init()
 		type: 'click',
 		media: rightMedia,
 		clicks: 1
-	}], timeoutMinutes: 1 }];
-	var timeline = choice;
-	var results = buildInitialRes(left, right);
-	timeBegin = Date.now();
-	console.log(runTrial(timeline, 0, results));
+	}], timeoutMinutes: 9, backgroundColour: GREY }];
+
+	/*
+		Outcome devaluation
+		The butterflies disappears. Background changes from grey to blue.
+		The video display appears, and the three video clips from one of the two car- 
+		toon series/movies repeat four times with a 3-s interval between clips. 
+		Which show/movie is randomly chosen. 
+		*/
+		var outcomeMedia = (Math.random() >= 0.5) ? leftMedia.videos : rightMedia.videos;
+
+
+		var outcomeDevaluation = [
+		{type: 'reward', media: { videos: outcomeMedia[0]}, backgroundColour: BLUE},
+		{type: 'pause', timeoutSeconds: 3},
+		{type: 'reward', media: { videos: outcomeMedia[1]} },
+		{type: 'pause', timeoutSeconds: 3},
+		{type: 'reward', media: { videos: outcomeMedia[2]}}
+		];
+
+	/*
+		Post-devaluation extinction test 
+		Following outcome devaluation, the video display 
+		disappears, the background color changes back to gray, 
+		and the display with the two butterfly icons appear again. 
+		Unknown to the children, both response areas become deactivated, 
+		so that touch responses do not cause any video outcomes 
+		for a period of 1 min.
+			*/
+
+		var postDeval = [{type: 'post', media: [leftMedia,	rightMedia], timeoutMinutes: 1}];
+
+
+		var timeline = postDeval;
+		var results = buildInitialRes(left, right);
+		timeBegin = Date.now();
+
+	//begin trial
+	runTrial(timeline, 0, results);
 
 }
 function runTrial(timeline, i, results)
@@ -102,8 +109,20 @@ function runTrial(timeline, i, results)
 	if(i >= timeline.length)
 		return results;
 	var trial = timeline[i];
+	if(trial.backgroundColour)
+	{
+		$('#mainContainer').css("background-color", trial.backgroundColour);
+	}
 	var trialData = {trialIndex: i, type: timeline[i].type, timeStart: Date.now() - timeBegin, event: []};
 	console.log("current trial:", trial)
+	if(trial.type === 'post')
+	{
+		post(trial, trialData, results, function(results){
+			//scrub(trial);
+			console.log('results:', results);
+			return runTrial(timeline, ++i, results);
+		});
+	}
 	if(trial.type === 'choice')
 	{
 		choice(trial, trialData, results, function(){
@@ -129,8 +148,21 @@ function runTrial(timeline, i, results)
 			return runTrial(timeline, ++i, results);
 		});
 	}
+	if(trial.type === 'pause')
+	{
+		setTimeout(function() {runTrial(timeline, ++i, results);}, 1000 * trial.timeoutSeconds);
+	}
 
 }
+function post(trial, trialData, results, callback)
+{
+	//console.log('trialdata:', trialData);
+	var updatedRes = results;
+	setTimeout(function() {callback(updatedRes)}, 100 * 60 * trial.timeoutMinutes);
+	click(trial.media[0].image, 1, trialData, results, function(){
+	})
+}
+
 //this removes all event handlers and turns everything off
 function scrub(trial)
 {
@@ -164,7 +196,9 @@ function click(media, maxClicks, trialData, results, callback)
 {
 	$(media).show();
 	randomize(media);
-	var clicks = 0;
+	var clicks = maxClicks - Math.floor(maxClicks * Math.random());
+	if(DEBUG)
+		console.log('clicks:', clicks, ' from maxClicks:', maxClicks);
 	$(media).on('click', function(event)
 	{
 		if(DEBUG)
@@ -184,12 +218,19 @@ function reward(videos, trialData, results, callback)
 	if(DEBUG && false)
 		console.log('REWARD registered for trial');
 	$('#mediaPane').show();
-	$(videos[0]).show();
-	$(videos[0]).get(0).play();
+	var video = videos;
+	if(videos instanceof Array)
+	{
+		// if videos is an array choose a random one
+		video = videos[Math.floor(Math.random() *  videos.length)]; 
+	}
+	console.log($(video));
+	$(video).show();
+	$(video).get(0).play();
 		//console.log(trial.media.videos[0]);
-		$(videos[0]).one('ended',function(){
+		$(video).one('ended',function(){
 			trialData.event.push({action :'videoComplete', time : Date.now() - timeBegin});
-			$(videos[0]).hide();
+			$(video).hide();
 			$('#mediaPane').hide();
 			results.trials.push(trialData);
 			callback();

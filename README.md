@@ -1,8 +1,10 @@
-#Assumptions
+#Assumptions and Questions
 
-* For the choice phases it is ok to wait until the video terminates before we move to the next phase even if the timer has completed halfway through (we do not need to terminate mid videos)
-
-
+* When two butterflies are on the screen does the child have to touch ONE up to five times in a row or both a total number of five (assuming a RANDOM number of 5 is chosen)
+* it's ok to have controls if it is being used on an ipad otherwise the video won't work https://developer.apple.com/library/safari/documentation/AudioVideo/Conceptual/Using_HTML5_Audio_Video/Device-SpecificConsiderations/Device-SpecificConsiderations.html
+* is it cool for the 
+* "The video display appears, and the three video clips from one of the two car- toon series/movies repeat four times with a 3-s interval between clips. Which show/movie is randomly chosen. "  < - what does this mean? - so we have three vids from either finding Nemo or Frozen. Do the 3 cycle through 4 times, does each repeat 4 times before moving to the next one or do we randomly select from the videos?
+* "Post-devaluation extinction test" " both response areas become deactivated, so that touch responses do not cause any video" - do the butterflies still move? I assume no.
 
 #To do
 
@@ -10,6 +12,8 @@
 * Set background colours
 * randomly choose from array of videos
 * randomly get the set of clicks
+* get preloading working
+* check it 
 
 
 
