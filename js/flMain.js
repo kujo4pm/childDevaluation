@@ -25,8 +25,14 @@ function init()
 
 	
 	// below is the experiment separated into trials
+
+	/*
+	Warm-up phase:
+		2 trials where only the right hand butterfly appears. After each touch, the video plays.
+		2 trials where only the left butterfly appears. After each touch, the video plays.
+	*/
 	var warmUpPhase = [
-	{	type: 'text',  media: introText, clicks: 1},
+	{	type: 'text',  media: introText, clicks: 1, backgroundColour: GREY },
 	{	type: 'click', media: leftMedia,clicks: 1},
 	{ 	type: 'reward',media: leftMedia},
 	{	type: 'click', media: leftMedia,clicks: 1},
@@ -54,15 +60,25 @@ function init()
 	{type: 'reward',media: rightMedia}];
 	var singleActionPhaseA = [].concat(R,L,R,R,L,L,R,L);
 	var singleActionPhaseB = [].concat(L,R,R,L,R,L,L,R);
+
+
+
+	/* 
+	Choice phase.
+	Then there is a 7 minute block where both butterflies on displayed 
+	on the screen and the child can freely touch as much as they want 
+	and the corresponding videos will play. During this time, it should 
+	vary randomly from 1 to 5 touches for the video to play.
+	*/
 	var choicePhase = [{type:'choice', media: [{
 		type: 'click',
 		media: leftMedia,
-		clicks: 1
+		clicks: 5
 	},{
 		type: 'click',
 		media: rightMedia,
-		clicks: 1
-	}], timeoutMinutes: 9, backgroundColour: GREY }];
+		clicks: 5
+	}], timeoutMinutes: 7, backgroundColour: GREY }];
 
 	/*
 		Outcome devaluation
@@ -94,20 +110,22 @@ function init()
 
 		var postDeval = [{type: 'post', media: [leftMedia,	rightMedia], timeoutMinutes: 1}];
 
-
-		var timeline = postDeval;
+		var buildTimeLine = [].concat(warmUpPhase, singleActionPhaseA, singleActionPhaseB, choicePhase);
+		var timeline =choicePhase;
 		var results = buildInitialRes(left, right);
 		timeBegin = Date.now();
 
 	//begin trial
-	runTrial(timeline, 0, results);
+	runTrial(timeline, 0, results, function(res){
+		$('#mainContainer').html('<pre>' + JSON.stringify(res,  null, '\t') + '</pre>');
+		console.log("results:", JSON.stringify(res,  null, '\t'));
+	} );
 
 }
-function runTrial(timeline, i, results)
+function runTrial(timeline, i, results, next)
 {
-	console.log("results:", JSON.stringify(results,  null, '\t'));
 	if(i >= timeline.length)
-		return results;
+		return next(results);
 	var trial = timeline[i];
 	if(trial.backgroundColour)
 	{
@@ -118,49 +136,65 @@ function runTrial(timeline, i, results)
 	if(trial.type === 'post')
 	{
 		post(trial, trialData, results, function(results){
-			//scrub(trial);
-			console.log('results:', results);
-			return runTrial(timeline, ++i, results);
+			return runTrial(timeline, ++i, results, next);
 		});
 	}
 	if(trial.type === 'choice')
 	{
-		choice(trial, trialData, results, function(){
+		choice(trial, trialData, results, function(results){
 			scrub(trial);
-			return runTrial(timeline, ++i, results);
+			return runTrial(timeline, ++i, results, next);
 		});
 	}
 	if(trial.type === 'click')
 	{
 		click(trial.media.image, trial.clicks, trialData, results, function(){
-			return runTrial(timeline, ++i, results);
+			return runTrial(timeline, ++i, results, next);
 		});
 	}
 	if(trial.type === 'reward')
 	{
 		reward(trial.media.videos, trialData, results, function(){
-			return runTrial(timeline, ++i, results);
+			return runTrial(timeline, ++i, results, next);
 		});
 	}
 	if(trial.type === 'text')
 	{
 		text(trial.media, trialData, i, results, function(){
-			return runTrial(timeline, ++i, results);
+			return runTrial(timeline, ++i, results, next);
 		});
 	}
 	if(trial.type === 'pause')
 	{
-		setTimeout(function() {runTrial(timeline, ++i, results);}, 1000 * trial.timeoutSeconds);
+		setTimeout(function() {runTrial(timeline, ++i, results, next);}, 1000 * trial.timeoutSeconds);
 	}
 
 }
 function post(trial, trialData, results, callback)
 {
 	//console.log('trialdata:', trialData);
-	var updatedRes = results;
-	setTimeout(function() {callback(updatedRes)}, 100 * 60 * trial.timeoutMinutes);
-	click(trial.media[0].image, 1, trialData, results, function(){
-	})
+	var image1 = trial.media[0].image;
+	var image2 = trial.media[1].image;
+	var clicks = 0;
+	setTimeout(function() {
+		$(image1).hide();
+		$(image1).off();
+		$(image2).hide();
+		$(image2).off();
+		results.trials.push(trialData);
+		callback(results);
+	}, 100 * 60 * trial.timeoutMinutes);
+
+	$(image1).show();
+	$(image2).show();
+	randomize(image1);
+	randomize(image2);
+	$(image1).on('click', function() {
+		trialData.event.push({action :'click', image: 'left', time : Date.now() - timeBegin, clickNumber: clicks++});
+	});
+	$(image2).on('click', function() {
+		trialData.event.push({action :'click', image: 'right', time : Date.now() - timeBegin, clickNumber: clicks++});
+	});
 }
 
 //this removes all event handlers and turns everything off
@@ -178,7 +212,7 @@ function scrub(trial)
 function choice(trial, trialData, results, callback)
 {
 	//console.log('trialdata:', trialData);
-	setTimeout(function() {callback()}, 100 * 60 * trial.timeoutMinutes);
+	setTimeout(function() {callback(results)}, 10 * 60 * trial.timeoutMinutes);
 	click(trial.media[0].media.image, trial.media[0].clicks, trialData, results, function(){
 		$(trial.media[1].media.image).hide();
 		reward(trial.media[0].media.videos, trialData, results, function(){
@@ -196,15 +230,16 @@ function click(media, maxClicks, trialData, results, callback)
 {
 	$(media).show();
 	randomize(media);
-	var clicks = maxClicks - Math.floor(maxClicks * Math.random());
+	var randMaxClicks = maxClicks - Math.floor(maxClicks * Math.random());
+	var currentClicks = 0;
 	if(DEBUG)
-		console.log('clicks:', clicks, ' from maxClicks:', maxClicks);
+		console.log('clicks:', randMaxClicks, ' from maxClicks:', maxClicks);
 	$(media).on('click', function(event)
 	{
-		if(DEBUG)
-			console.log('BUTTERFLY clicked');
-		trialData.event.push({action :'click', time : Date.now() - timeBegin, clickNumber: clicks + 1});
-		if(++clicks >= maxClicks)
+		if(DEBUG && false)
+			console.log('BUTTERFLY clicked:', $(media).get(0).src);
+		trialData.event.push({action :'click', time : Date.now() - timeBegin, clickNumber: ++currentClicks, image:$(media).get(0).src});
+		if(currentClicks >= randMaxClicks)
 		{	
 			$(media).hide();
 			$( this ).off( event );
