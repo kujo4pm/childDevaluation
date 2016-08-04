@@ -30,18 +30,18 @@ function init()
 	Warm-up phase:
 		2 trials where only the right hand butterfly appears. After each touch, the video plays.
 		2 trials where only the left butterfly appears. After each touch, the video plays.
-	*/
-	var warmUpPhase = [
-	{	type: 'text',  media: introText, clicks: 1, backgroundColour: GREY },
-	{	type: 'click', media: leftMedia,clicks: 1},
-	{ 	type: 'reward',media: leftMedia},
-	{	type: 'click', media: leftMedia,clicks: 1},
-	{ 	type: 'reward',media: leftMedia},
-	{	type: 'click', media: rightMedia,clicks: 1},
-	{ 	type: 'reward',media: rightMedia},
-	{	type: 'click', media: rightMedia,clicks: 1},
-	{ 	type: 'reward',media: rightMedia},
-	{	type: 'text', media: endText, clicks: 1}];
+		*/
+		var warmUpPhase = [
+		{	type: 'text',  media: introText, clicks: 1, backgroundColour: GREY },
+		{	type: 'click', media: leftMedia,clicks: 1},
+		{ 	type: 'reward',media: leftMedia},
+		{	type: 'click', media: leftMedia,clicks: 1},
+		{ 	type: 'reward',media: leftMedia},
+		{	type: 'click', media: rightMedia,clicks: 1},
+		{ 	type: 'reward',media: rightMedia},
+		{	type: 'click', media: rightMedia,clicks: 1},
+		{ 	type: 'reward',media: rightMedia},
+		{	type: 'text', media: endText, clicks: 1}];
 
 
 	/*
@@ -111,12 +111,13 @@ function init()
 		var postDeval = [{type: 'post', media: [leftMedia,	rightMedia], timeoutMinutes: 1}];
 
 		var buildTimeLine = [].concat(warmUpPhase, singleActionPhaseA, singleActionPhaseB, choicePhase);
-		var timeline =choicePhase;
+		var timeline = choicePhase;
 		var results = buildInitialRes(left, right);
 		timeBegin = Date.now();
 
 	//begin trial
 	runTrial(timeline, 0, results, function(res){
+		console.log(res);
 		$('#mainContainer').html('<pre>' + JSON.stringify(res,  null, '\t') + '</pre>');
 		console.log("results:", JSON.stringify(res,  null, '\t'));
 	} );
@@ -131,7 +132,7 @@ function runTrial(timeline, i, results, next)
 	{
 		$('#mainContainer').css("background-color", trial.backgroundColour);
 	}
-	var trialData = {trialIndex: i, type: timeline[i].type, timeStart: Date.now() - timeBegin, event: []};
+	var trialData = {trialIndex: i, type: timeline[i].type, timeStart: Date.now() - timeBegin};
 	console.log("current trial:", trial)
 	if(trial.type === 'post')
 	{
@@ -141,26 +142,34 @@ function runTrial(timeline, i, results, next)
 	}
 	if(trial.type === 'choice')
 	{
-		choice(trial, trialData, results, function(results){
+		choice(trial, function(events){
+			trialData.events = events; 
+			results.trials.push(trialData);
 			scrub(trial);
 			return runTrial(timeline, ++i, results, next);
 		});
 	}
 	if(trial.type === 'click')
 	{
-		click(trial.media.image, trial.clicks, trialData, results, function(){
+		click(trial.media.image, trial.clicks, function(events){
+			trialData.events = events; 
+			results.trials.push(trialData);
 			return runTrial(timeline, ++i, results, next);
 		});
 	}
 	if(trial.type === 'reward')
 	{
-		reward(trial.media.videos, trialData, results, function(){
+		reward(trial.media.videos, function(events){
+			trialData.events = events;
+			results.trials.push(trialData);
 			return runTrial(timeline, ++i, results, next);
 		});
 	}
 	if(trial.type === 'text')
 	{
-		text(trial.media, trialData, i, results, function(){
+		text(trial.media, trialData, i, results, function(events){
+			trialData.events = events;
+			results.trials.push(trialData);
 			return runTrial(timeline, ++i, results, next);
 		});
 	}
@@ -190,70 +199,100 @@ function post(trial, trialData, results, callback)
 	randomize(image1);
 	randomize(image2);
 	$(image1).on('click', function() {
-		trialData.event.push({action :'click', image: 'left', time : Date.now() - timeBegin, clickNumber: clicks++});
+		trialData.events.push({action :'click', image: 'left', time : Date.now() - timeBegin, clickNumber: clicks++});
 	});
 	$(image2).on('click', function() {
-		trialData.event.push({action :'click', image: 'right', time : Date.now() - timeBegin, clickNumber: clicks++});
+		trialData.events.push({action :'click', image: 'right', time : Date.now() - timeBegin, clickNumber: clicks++});
 	});
 }
 
 //this removes all event handlers and turns everything off
 function scrub(trial)
 {
+	scrubEvents(trial);
+	scrubMedia(trial);
+	$('#mediaPane').hide();
+}
+function scrubEvents(trial)
+{
 	for(var x = 0; x < trial.media.length; x++)
 	{
 		$(trial.media[x].media.image).off();
-		$(trial.media[x].media.image).hide();
 		$(trial.media[x].media.videos).off();
-		$(trial.media[x].media.videos).hide();
-		$('#mediaPane').hide();
 	}
 }
-function choice(trial, trialData, results, callback)
+
+function scrubMedia(trial)
 {
-	//console.log('trialdata:', trialData);
-	setTimeout(function() {callback(results)}, 10 * 60 * trial.timeoutMinutes);
-	click(trial.media[0].media.image, trial.media[0].clicks, trialData, results, function(){
-		$(trial.media[1].media.image).hide();
-		reward(trial.media[0].media.videos, trialData, results, function(){
-			choice(trial, trialData, results, callback);
-		});
-	});
-	click(trial.media[1].media.image, trial.media[1].clicks, trialData, results, function(){
-		$(trial.media[0].media.image).hide();
-		reward(trial.media[1].media.videos, trialData, results, function(){
-			choice(trial, trialData, results, callback);
-		});
-	});
+	for(var x = 0; x < trial.media.length; x++)
+	{
+		$(trial.media[x].media.image).off();
+		$(trial.media[x].media.videos).off();
+	}
 }
-function click(media, maxClicks, trialData, results, callback)
+
+
+function choice(trial, callback)
+{
+	var eventsFinal = [];
+	setTimeout(function() {
+		console.log("final:", eventsFinal);
+		callback( eventsFinal);
+	}, 60 * 100 * trial.timeoutMinutes);
+	var leftMed = trial.media[0];
+	var rightMed = trial.media[1];
+	var repeater = function()
+	{
+		scrubEvents(trial);
+		click(leftMed.media.image, leftMed.clicks, function(tc1){
+			$(rightMed.media.image).hide();
+			eventsFinal = eventsFinal.concat(tc1);
+			reward(leftMed.media.videos, function(tr1){
+				eventsFinal = eventsFinal.concat(tr1);
+				return repeater([]);
+			});
+		});
+		click(rightMed.media.image,rightMed.clicks, function(tc2){
+			$(leftMed.media.image).hide();
+			eventsFinal = eventsFinal.concat(tc2);
+			reward(rightMed.media.videos, function(tr2){
+				eventsFinal = eventsFinal.concat(tr2);
+				repeater([]);
+			});
+		});
+	}
+	repeater(eventsFinal);
+}
+function click(media, maxClicks, callback)
 {
 	$(media).show();
 	randomize(media);
 	var randMaxClicks = maxClicks - Math.floor(maxClicks * Math.random());
 	var currentClicks = 0;
+	var events = [];
 	if(DEBUG)
 		console.log('clicks:', randMaxClicks, ' from maxClicks:', maxClicks);
 	$(media).on('click', function(event)
 	{
 		if(DEBUG && false)
 			console.log('BUTTERFLY clicked:', $(media).get(0).src);
-		trialData.event.push({action :'click', time : Date.now() - timeBegin, clickNumber: ++currentClicks, image:$(media).get(0).src});
+		events.push({action :'click', time : Date.now() - timeBegin, clickNumber: ++currentClicks, image:$(media).get(0).src});
 		if(currentClicks >= randMaxClicks)
 		{	
 			$(media).hide();
 			$( this ).off( event );
-			results.trials.push(trialData);
-			callback();
+			//results.trials.push(trialData);
+			callback(events);
 		}
 	});
 }
-function reward(videos, trialData, results, callback)
+function reward(videos, callback)
 {
 	if(DEBUG && false)
 		console.log('REWARD registered for trial');
 	$('#mediaPane').show();
 	var video = videos;
+	var events = [];
 	if(videos instanceof Array)
 	{
 		// if videos is an array choose a random one
@@ -264,11 +303,11 @@ function reward(videos, trialData, results, callback)
 	$(video).get(0).play();
 		//console.log(trial.media.videos[0]);
 		$(video).one('ended',function(){
-			trialData.event.push({action :'videoComplete', time : Date.now() - timeBegin});
+			events.push({action :'videoComplete', time : Date.now() - timeBegin});
 			$(video).hide();
 			$('#mediaPane').hide();
-			results.trials.push(trialData);
-			callback();
+			//results.trials.push(trialData);
+			callback(events);
 		});
 	}
 
@@ -279,13 +318,14 @@ function reward(videos, trialData, results, callback)
 			console.log('INFORMATION BEING PRESENTED for trial');
 		$('#mediaPane').show();
 		$('#mediaPane').append('<div class="instruct" id="text_' + index + '">' + text + '</div>');
+		var events = [];
 		$('#mediaPane').one('click', function()
 		{
-			trialData.event.push({action :'click', time : Date.now() - timeBegin});
+			events.push({action :'click', time : Date.now() - timeBegin});
 			$('#text_' + index).hide();
 			$('#mediaPane').hide();
-			results.trials.push(trialData);
-			callback();
+			//results.trials.push(trialData);
+			callback(events);
 		});
 	}
 	function buildVids(vids, id)
