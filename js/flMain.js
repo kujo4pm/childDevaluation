@@ -108,10 +108,24 @@ function init()
 		for a period of 1 min.
 			*/
 
-		var postDeval = [{type: 'post', media: [leftMedia,	rightMedia], timeoutMinutes: 1}];
+		var postDeval = [{type: 'post', media: [leftMedia,	rightMedia], timeoutMinutes: 1, backgroundColour: GREY}];
+	/*
+		Post-devaluation reacquisition test. 
+		This is identical to the choice phase except only lasts for 3.5 minutes.
+		*/
+		var choicePhase = [{type:'choice', media: [{
+			type: 'click',
+			media: leftMedia,
+			clicks: 5
+		},{
+			type: 'click',
+			media: rightMedia,
+			clicks: 5
+		}], timeoutMinutes: 7, backgroundColour: GREY }];
 
-		var buildTimeLine = [].concat(warmUpPhase, singleActionPhaseA, singleActionPhaseB, choicePhase);
-		var timeline = choicePhase;
+
+		var timeLineBuild = [].concat(warmUpPhase, singleActionPhaseA, singleActionPhaseB, choicePhase, outcomeDevaluation, postDeval, choicePhase);
+		var timeline =timeLineBuild ;
 		var results = buildInitialRes(left, right);
 		timeBegin = Date.now();
 
@@ -136,7 +150,9 @@ function runTrial(timeline, i, results, next)
 	console.log("current trial:", trial)
 	if(trial.type === 'post')
 	{
-		post(trial, trialData, results, function(results){
+		post(trial, function(events){
+			trialData.events = events; 
+			results.trials.push(trialData);
 			return runTrial(timeline, ++i, results, next);
 		});
 	}
@@ -179,19 +195,19 @@ function runTrial(timeline, i, results, next)
 	}
 
 }
-function post(trial, trialData, results, callback)
+function post(trial, callback)
 {
 	//console.log('trialdata:', trialData);
 	var image1 = trial.media[0].image;
 	var image2 = trial.media[1].image;
 	var clicks = 0;
+	var events = [];
 	setTimeout(function() {
 		$(image1).hide();
 		$(image1).off();
 		$(image2).hide();
 		$(image2).off();
-		results.trials.push(trialData);
-		callback(results);
+		callback(events);
 	}, 100 * 60 * trial.timeoutMinutes);
 
 	$(image1).show();
@@ -199,10 +215,10 @@ function post(trial, trialData, results, callback)
 	randomize(image1);
 	randomize(image2);
 	$(image1).on('click', function() {
-		trialData.events.push({action :'click', image: 'left', time : Date.now() - timeBegin, clickNumber: clicks++});
+		events.push({action :'click', image: 'left', time : Date.now() - timeBegin, clickNumber: ++clicks, image:$(image1).get(0).src});
 	});
 	$(image2).on('click', function() {
-		trialData.events.push({action :'click', image: 'right', time : Date.now() - timeBegin, clickNumber: clicks++});
+		events.push({action :'click', image: 'right', time : Date.now() - timeBegin, clickNumber: ++clicks, image:$(image2).get(0).src});
 	});
 }
 
