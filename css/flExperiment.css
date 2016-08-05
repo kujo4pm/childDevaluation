@@ -25,30 +25,40 @@ img {
   url(../videos/fr_vid3.mp4)
   url(../videos/nm_vid1.mp4)
   url(../videos/nm_vid2.mp4)
-  url(../videos/nm_vid3.mp4);}
-  #mediaPane
-  {
-    border-width: 1px;
-    border-color: black;
-    border-style: solid;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    margin-right: -50%;
-    transform: translate(-50%, -50%);
-    height:80%;
-    width:80%;
+  url(../videos/nm_vid3.mp4);
+}
+#mediaPane
+{
+  border-style: solid;
+  border-width: 1px;
+  position: absolute;
+  margin: auto;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 80%;
+  height: 80%;
+  overflow: auto;
+}
 
-  }
-  .rewardVid
-  {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    margin-right: -50%;
-    transform: translate(-50%, -50%);
-  }
-  .instruct
-  {
 
-  }
+.rewardVid
+{
+  position: absolute;
+  margin: auto;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+.instruct
+{
+
+}
+
+.warning
+{
+  color: red;
+  font-size: 1.2em;
+}

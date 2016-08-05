@@ -1,5 +1,11 @@
-function init()
+function init(subjectDetailsUnparsed)
 {
+	var subjectDetails = parseForm(subjectDetailsUnparsed);
+	if(!checkVideoSupported())
+	{
+		$('#mediaPane').html(unsupported);
+		return;
+	}
 	//These are set for each subject and remain the same
 	var left = {
 		imageIndex : Math.round(Math.random()),
@@ -26,13 +32,14 @@ function init()
 	
 	// below is the experiment separated into trials
 
+	var intro = [{	type: 'text',  media: introText, clicks: 1, backgroundColour: GREY}];
+	var conclusion = [{	type: 'text', media: endText, clicks: 1}];
 	/*
 	Warm-up phase:
 		2 trials where only the right hand butterfly appears. After each touch, the video plays.
 		2 trials where only the left butterfly appears. After each touch, the video plays.
 		*/
 		var warmUpPhase = [
-		{	type: 'text',  media: introText, clicks: 1, backgroundColour: GREY },
 		{	type: 'click', media: leftMedia,clicks: 1},
 		{ 	type: 'reward',media: leftMedia},
 		{	type: 'click', media: leftMedia,clicks: 1},
@@ -40,8 +47,7 @@ function init()
 		{	type: 'click', media: rightMedia,clicks: 1},
 		{ 	type: 'reward',media: rightMedia},
 		{	type: 'click', media: rightMedia,clicks: 1},
-		{ 	type: 'reward',media: rightMedia},
-		{	type: 'text', media: endText, clicks: 1}];
+		{ 	type: 'reward',media: rightMedia}];
 
 
 	/*
@@ -124,15 +130,25 @@ function init()
 		}], timeoutMinutes: 7, backgroundColour: GREY }];
 
 
-		var timeLineBuild = [].concat(warmUpPhase, singleActionPhaseA, singleActionPhaseB, choicePhase, outcomeDevaluation, postDeval, choicePhase);
-		var timeline =timeLineBuild ;
+		var timeLineBuild = [].concat(
+			intro,
+			warmUpPhase, 
+			singleActionPhaseA, 
+			singleActionPhaseB, 
+			choicePhase, 
+			outcomeDevaluation, 
+			postDeval, 
+			choicePhase, conclusion);
+		var timeline = timeLineBuild ;
 		var results = buildInitialRes(left, right);
+		results.subjectDetails = subjectDetails;
 		timeBegin = Date.now();
 
 	//begin trial
 	runTrial(timeline, 0, results, function(res){
 		console.log(res);
-		$('#mainContainer').html('<pre>' + JSON.stringify(res,  null, '\t') + '</pre>');
+		$('#mediaPane').show();
+		$('#mediaPane').html('<pre>' + JSON.stringify(res,  null, '\t') + '</pre>');
 		console.log("results:", JSON.stringify(res,  null, '\t'));
 	} );
 
@@ -183,7 +199,7 @@ function runTrial(timeline, i, results, next)
 	}
 	if(trial.type === 'text')
 	{
-		text(trial.media, trialData, i, results, function(events){
+		text(trial.media, i, function(events){
 			trialData.events = events;
 			results.trials.push(trialData);
 			return runTrial(timeline, ++i, results, next);
@@ -328,14 +344,14 @@ function reward(videos, callback)
 	}
 
 	
-	function text(text, trialData, index, results, callback)
+	function text(text, index, callback)
 	{
 		if(DEBUG && false)
 			console.log('INFORMATION BEING PRESENTED for trial');
 		$('#mediaPane').show();
-		$('#mediaPane').append('<div class="instruct" id="text_' + index + '">' + text + '</div>');
+		$('#mediaPane').append('<div class="instruct" id="text_' + index + '">' + text + '<a href="#" class="clickhere"><b>Click here to continue</b></a>' + '</div>' );
 		var events = [];
-		$('#mediaPane').one('click', function()
+		$('a.clickhere').one('click', function()
 		{
 			events.push({action :'click', time : Date.now() - timeBegin});
 			$('#text_' + index).hide();
@@ -351,33 +367,33 @@ function reward(videos, callback)
 		for(var i =0 ; i < vids.files.length; i++)
 		{
 			var newVideo = document.createElement('video');
-		//console.log(' videos[index]' ,vids );
-		newVideo.src = "videos/" + vids.files[i];
-		newVideo.id = id + "_" + i;
-		newVideo.className = 'rewardVid';
-		$('#mediaPane').append(newVideo);
-		$('#' + newVideo.id).hide();
-		newVids.push(newVideo);
+			newVideo.src = "videos/" + vids.files[i];
+			newVideo.id = id + "_" + i;
+			newVideo.className = 'rewardVid';
+			console.log(' new video created' , newVideo);
+			$('#mediaPane').append(newVideo);
+			$('#' + newVideo.id).hide();
+			newVids.push(newVideo);
+		}
+		$('#mediaPane').hide();
+		return newVids;
 	}
-	$('#mediaPane').hide();
-	return newVids;
-}
-function buildImage(image, id)
-{
-	var newImage = document.createElement('img');
-	newImage.src = "img/" + image;
-	newImage.id = id;
-	$('#mainContainer').append(newImage);
-	$('#' + id).hide();
-	return newImage;
-}
-function randomize(item)
-{
-	var offset =0;
-	if(item.id === 'rightImage')
+	function buildImage(image, id)
 	{
-		offset = sideWidth;
+		var newImage = document.createElement('img');
+		newImage.src = "img/" + image;
+		newImage.id = id;
+		$('#mainContainer').append(newImage);
+		$('#' + id).hide();
+		return newImage;
 	}
+	function randomize(item)
+	{
+		var offset =0;
+		if(item.id === 'rightImage')
+		{
+			offset = sideWidth;
+		}
 	//console.log('right', item);
 	$(item).css({left: Math.floor(Math.random() * (sideWidth - imageWidth)) + offset , top:Math.floor(Math.random() * (sideHeight - imageHeight))});
 }
@@ -401,4 +417,26 @@ function buildInitialRes(left, right)
 	if(DEBUG)
 		console.log('intial results', results);
 	return results;
+}
+
+function checkVideoSupported()
+{
+	var canPlay = false;
+	var v = document.createElement('video');
+	if(v.canPlayType && v.canPlayType('video/mp4').replace(/no/, '')) {
+		canPlay = true;
+	}
+	return canPlay;
+}
+
+function parseForm(subjectDetailsUnparsed)
+{
+	return {
+		dob: subjectDetailsUnparsed[0].value,
+		age: subjectDetailsUnparsed[1].value,
+		gender: subjectDetailsUnparsed[2].value,
+		languages: subjectDetailsUnparsed[3].value,
+		sequenceNo: subjectDetailsUnparsed[4].value,
+		comments: subjectDetailsUnparsed[5].value
+	};
 }
