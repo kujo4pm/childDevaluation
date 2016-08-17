@@ -131,11 +131,11 @@ function init(subjectDetailsUnparsed)
 
 
 		var timeLineBuild = [
-	/*	intro,
+		intro,
 		warmUpPhase, 
 		singleActionPhaseA, 
 		singleActionPhaseB, 
-		choicePhaseInitial, */
+		choicePhaseInitial, 
 		outcomeDevaluation, 
 		postDeval, 
 		choicePhasePD, conclusion];
