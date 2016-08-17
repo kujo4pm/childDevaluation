@@ -27,9 +27,14 @@ var videos = [ {
 }];
 
 
-var DEBUG = true;
+var DEBUG =true;
 
 var GREY = '#c2c2a3';
 var BLUE = '#99ccff';
 
 var timeBegin;
+
+if(!DEBUG)
+{
+	$(".debug").hide();
+}

@@ -6,9 +6,9 @@
     <link href="css/flExperiment.css" rel="stylesheet" type="text/css"></link>
 </head>
 <body>
-    <div id="mainContainer"><div id="mediaPane">
+    <div id="mainContainer"><h1 class="debug">Phase: <span id="phase"></span></h1><textarea class="debug" id="jsonRes">RESULTS:</textarea><div id="mediaPane">
     	<!-- DOB, age, gender, subject # (in our sequence), how many and what languages spoken at home, and any other random comments. -->
-    	<form name="introForm">
+    	<form name="introForm" class="instruct">
     		<h3>Please enter in the subject's details:</h3>
     		D.O.B:<br><input type="text" name="dob"> <br>
     		Age:<br><input type="text" name="age"> <br>
@@ -22,7 +22,9 @@
  			Comments:<br><textarea name="comments"></textarea> <br>
  				<input id="button" type="button" value="Begin Experiment"/>
     	</form>
-    </div></div>
+    </div>
+
+    </div>
 </body>
 <script src="js/textInstructions.js"></script>
 <script src="js/flMain.js"></script>

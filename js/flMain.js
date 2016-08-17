@@ -32,14 +32,14 @@ function init(subjectDetailsUnparsed)
 	
 	// below is the experiment separated into trials
 
-	var intro = [{	type: 'text',  media: introText, clicks: 1, backgroundColour: GREY}];
-	var conclusion = [{	type: 'text', media: endText, clicks: 1}];
+	var intro = {phaseName: 'into', trials: [{	type: 'text',  media: introText, clicks: 1, backgroundColour: GREY}]};
+	var conclusion = {phaseName: 'conclusion', trials:[{	type: 'text', media: endText, clicks: 1}]};
 	/*
 	Warm-up phase:
 		2 trials where only the right hand butterfly appears. After each touch, the video plays.
 		2 trials where only the left butterfly appears. After each touch, the video plays.
 		*/
-		var warmUpPhase = [
+		var warmUpPhase = {phaseName: 'warm up', trials:[
 		{	type: 'click', media: leftMedia,clicks: 1},
 		{ 	type: 'reward',media: leftMedia},
 		{	type: 'click', media: leftMedia,clicks: 1},
@@ -47,7 +47,7 @@ function init(subjectDetailsUnparsed)
 		{	type: 'click', media: rightMedia,clicks: 1},
 		{ 	type: 'reward',media: rightMedia},
 		{	type: 'click', media: rightMedia,clicks: 1},
-		{ 	type: 'reward',media: rightMedia}];
+		{ 	type: 'reward',media: rightMedia}]};
 
 
 	/*
@@ -64,8 +64,8 @@ function init(subjectDetailsUnparsed)
 	{type: 'reward',media: leftMedia}];
 	var R = [{type: 'click',media: rightMedia,clicks: 5},
 	{type: 'reward',media: rightMedia}];
-	var singleActionPhaseA = [].concat(R,L,R,R,L,L,R,L);
-	var singleActionPhaseB = [].concat(L,R,R,L,R,L,L,R);
+	var singleActionPhaseA = {phaseName: 'Single-action phase. Part A.', trials: [].concat(R,L,R,R,L,L,R,L)};
+	var singleActionPhaseB = {phaseName: 'Single-action phase. Part B.', trials: [].concat(L,R,R,L,R,L,L,R)};
 
 
 
@@ -76,7 +76,7 @@ function init(subjectDetailsUnparsed)
 	and the corresponding videos will play. During this time, it should 
 	vary randomly from 1 to 5 touches for the video to play.
 	*/
-	var choicePhase = [{type:'choice', media: [{
+	var choicePhaseInitial = {phaseName: 'choice', trials:[{type:'choice', media: [{
 		type: 'click',
 		media: leftMedia,
 		clicks: 5
@@ -84,7 +84,7 @@ function init(subjectDetailsUnparsed)
 		type: 'click',
 		media: rightMedia,
 		clicks: 5
-	}], timeoutMinutes: 7, backgroundColour: GREY }];
+	}], timeoutMinutes: 7, backgroundColour: GREY }]};
 
 	/*
 		Outcome devaluation
@@ -96,13 +96,13 @@ function init(subjectDetailsUnparsed)
 		var outcomeMedia = (Math.random() >= 0.5) ? leftMedia.videos : rightMedia.videos;
 
 
-		var outcomeDevaluation = [
+		var outcomeDevaluation = {phaseName: 'Outcome devaluation', trials:[
 		{type: 'reward', media: { videos: outcomeMedia[0]}, backgroundColour: BLUE},
 		{type: 'pause', timeoutSeconds: 3},
 		{type: 'reward', media: { videos: outcomeMedia[1]} },
 		{type: 'pause', timeoutSeconds: 3},
 		{type: 'reward', media: { videos: outcomeMedia[2]}}
-		];
+		]};
 
 	/*
 		Post-devaluation extinction test 
@@ -114,12 +114,12 @@ function init(subjectDetailsUnparsed)
 		for a period of 1 min.
 			*/
 
-		var postDeval = [{type: 'post', media: [leftMedia,	rightMedia], timeoutMinutes: 1, backgroundColour: GREY}];
+		var postDeval = {phaseName: 'Post-devaluation extinction test', trials:[{type: 'post', media: [leftMedia,	rightMedia], timeoutMinutes: 1, backgroundColour: GREY}]};
 	/*
 		Post-devaluation reacquisition test. 
 		This is identical to the choice phase except only lasts for 3.5 minutes.
 		*/
-		var choicePhase = [{type:'choice', media: [{
+		var choicePhasePD = {phaseName: 'Post-devaluation reacquisition', trials:[{type:'choice', media: [{
 			type: 'click',
 			media: leftMedia,
 			clicks: 5
@@ -127,49 +127,72 @@ function init(subjectDetailsUnparsed)
 			type: 'click',
 			media: rightMedia,
 			clicks: 5
-		}], timeoutMinutes: 7, backgroundColour: GREY }];
+		}], timeoutMinutes: 7, backgroundColour: GREY }]};
 
 
-		var timeLineBuild = [].concat(
-			intro,
-			warmUpPhase, 
-			singleActionPhaseA, 
-			singleActionPhaseB, 
-			choicePhase, 
-			outcomeDevaluation, 
-			postDeval, 
-			choicePhase, conclusion);
+		var timeLineBuild = [
+	/*	intro,
+		warmUpPhase, 
+		singleActionPhaseA, 
+		singleActionPhaseB, 
+		choicePhaseInitial, */
+		outcomeDevaluation, 
+		postDeval, 
+		choicePhasePD, conclusion];
 		var timeline = timeLineBuild ;
 		var results = buildInitialRes(left, right);
 		results.subjectDetails = subjectDetails;
 		timeBegin = Date.now();
 
-	//begin trial
-	runTrial(timeline, 0, results, function(res){
-		console.log(res);
-		$('#mediaPane').show();
-		$('#mediaPane').html('<pre>' + JSON.stringify(res,  null, '\t') + '</pre>');
-		console.log("results:", JSON.stringify(res,  null, '\t'));
-	} );
+		var phase = 0;	
 
+
+		runPhase(timeline, phase, results, function(results)
+		{
+			console.log(res);
+			$('#mediaPane').show();
+			$('#mediaPane').html('<pre>' + JSON.stringify(res,  null, '\t') + '</pre>');
+			console.log("results:", JSON.stringify(res,  null, '\t'));
+		});
+	//begin trial
+	function runPhase(timeline, phase, results, callback)
+	{
+		runTrials(timeline[phase].trials, 0, results, function(res)
+		{	
+			phase++;
+			if(DEBUG)
+			{
+				$('#phase').text("#"+ phase + " " + timeline[phase].phaseName);
+				$('#jsonRes').val($('#jsonRes').val() + "\nRESULTS #"+ phase + "for phase:" + timeline[phase].phaseName + JSON.stringify(results,  null, '\t'));
+			}
+			return runPhase(timeline, phase, results, callback);
+		});
+
+		
+	}
+	
 }
-function runTrial(timeline, i, results, next)
+function runTrials(currentPhase, i, results, next)
 {
-	if(i >= timeline.length)
+	var trial = currentPhase[i];
+	if(i >= currentPhase.length)
+	{
+		scrub(trial);
 		return next(results);
-	var trial = timeline[i];
+	}
+	
 	if(trial.backgroundColour)
 	{
 		$('#mainContainer').css("background-color", trial.backgroundColour);
 	}
-	var trialData = {trialIndex: i, type: timeline[i].type, timeStart: Date.now() - timeBegin};
-	console.log("current trial:", trial)
+	var trialData = {trialIndex: i, type: currentPhase[i].type, timeStart: Date.now() - timeBegin};
+	console.log("current trial:", trial);
 	if(trial.type === 'post')
 	{
 		post(trial, function(events){
 			trialData.events = events; 
 			results.trials.push(trialData);
-			return runTrial(timeline, ++i, results, next);
+			return runTrials(currentPhase, ++i, results, next);
 		});
 	}
 	if(trial.type === 'choice')
@@ -178,7 +201,7 @@ function runTrial(timeline, i, results, next)
 			trialData.events = events; 
 			results.trials.push(trialData);
 			scrub(trial);
-			return runTrial(timeline, ++i, results, next);
+			return runTrials(currentPhase, ++i, results, next);
 		});
 	}
 	if(trial.type === 'click')
@@ -186,7 +209,7 @@ function runTrial(timeline, i, results, next)
 		click(trial.media.image, trial.clicks, function(events){
 			trialData.events = events; 
 			results.trials.push(trialData);
-			return runTrial(timeline, ++i, results, next);
+			return runTrials(currentPhase, ++i, results, next);
 		});
 	}
 	if(trial.type === 'reward')
@@ -194,7 +217,7 @@ function runTrial(timeline, i, results, next)
 		reward(trial.media.videos, function(events){
 			trialData.events = events;
 			results.trials.push(trialData);
-			return runTrial(timeline, ++i, results, next);
+			return runTrials(currentPhase, ++i, results, next);
 		});
 	}
 	if(trial.type === 'text')
@@ -202,12 +225,12 @@ function runTrial(timeline, i, results, next)
 		text(trial.media, i, function(events){
 			trialData.events = events;
 			results.trials.push(trialData);
-			return runTrial(timeline, ++i, results, next);
+			return runTrials(currentPhase, ++i, results, next);
 		});
 	}
 	if(trial.type === 'pause')
 	{
-		setTimeout(function() {runTrial(timeline, ++i, results, next);}, 1000 * trial.timeoutSeconds);
+		setTimeout(function() {runTrials(currentPhase, ++i, results, next);}, 1000 * trial.timeoutSeconds);
 	}
 
 }
@@ -231,18 +254,21 @@ function post(trial, callback)
 	randomize(image1);
 	randomize(image2);
 	$(image1).on('click', function() {
-		events.push({action :'click', image: 'left', time : Date.now() - timeBegin, clickNumber: ++clicks, image:$(image1).get(0).src});
+		events.push({action :'click', image: 'left', time : Date.now() - timeBegin, clickNumber: ++clicks, imageSrc:$(image1).get(0).src});
 	});
 	$(image2).on('click', function() {
-		events.push({action :'click', image: 'right', time : Date.now() - timeBegin, clickNumber: ++clicks, image:$(image2).get(0).src});
+		events.push({action :'click', image: 'right', time : Date.now() - timeBegin, clickNumber: ++clicks, imageSrc:$(image2).get(0).src});
 	});
 }
 
 //this removes all event handlers and turns everything off
 function scrub(trial)
 {
-	scrubEvents(trial);
-	scrubMedia(trial);
+	if(trial && trial.media)
+	{
+		scrubEvents(trial);
+		scrubMedia(trial);
+	}
 	$('#mediaPane').hide();
 }
 function scrubEvents(trial)
@@ -258,8 +284,8 @@ function scrubMedia(trial)
 {
 	for(var x = 0; x < trial.media.length; x++)
 	{
-		$(trial.media[x].media.image).off();
-		$(trial.media[x].media.videos).off();
+		$(trial.media[x].media.image).hide();
+		$(trial.media[x].media.videos).hide();
 	}
 }
 
@@ -292,7 +318,7 @@ function choice(trial, callback)
 				repeater([]);
 			});
 		});
-	}
+	};
 	repeater(eventsFinal);
 }
 function click(media, maxClicks, callback)
