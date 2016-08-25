@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html manifest="demo.manifest">
 <head>
     <title>My experiment</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
@@ -8,29 +8,55 @@
 <body>
     <div id="mainContainer"><h1 class="debug">Phase: <span id="phase"></span></h1><textarea class="debug" id="jsonRes">RESULTS:</textarea><div id="mediaPane">
     	<!-- DOB, age, gender, subject # (in our sequence), how many and what languages spoken at home, and any other random comments. -->
-    	<form name="introForm" class="instruct">
-    		<h3>Please enter in the subject's details:</h3>
-    		D.O.B:<br><input type="text" name="dob"> <br>
-    		Age:<br><input type="text" name="age"> <br>
-    		Gender:<br><input type="radio" name="gender" value="male" checked> Male<br>
- 					<input type="radio" name="gender" value="female"> Female<br>
- 			Langages spoken at home:<br><input type="radio" name="lang" value="1" checked> 1 <br>
- 					<input type="radio" name="lang" value="2"> 2 <br>
- 					<input type="radio" name="lang" value="3"> 3 <br>
- 					<input type="radio" name="lang" value="4"> 4 <br>
- 			Sequence #:<br><input type="text" name="sequence"> <br>
- 			Comments:<br><textarea name="comments"></textarea> <br>
- 				<input id="button" type="button" value="Begin Experiment"/>
-    	</form>
-    </div>
-
-    </div>
+        <a href="#" id='preload'>Press to preload videos...</a>
+        <video id="preloadPane"></video>
+        <form name="introForm" class="instruct">
+          <h3>Please enter in the subject's details:</h3>
+          D.O.B:<br><input type="text" name="dob"> <br>
+          Age:<br><input type="text" name="age"> <br>
+          Gender:<br><input type="radio" name="gender" value="male" checked> Male<br>
+          <input type="radio" name="gender" value="female"> Female<br>
+          Langages spoken at home:<br><input type="radio" name="lang" value="1" checked> 1 <br>
+          <input type="radio" name="lang" value="2"> 2 <br>
+          <input type="radio" name="lang" value="3"> 3 <br>
+          <input type="radio" name="lang" value="4"> 4 <br>
+          Sequence #:<br><input type="text" name="sequence"> <br>
+          Comments:<br><textarea name="comments"></textarea> <br>
+          <input id="button" type="button" value="Begin Experiment"/>
+      </form>
+  </div>
+</div>
 </body>
 <script src="js/textInstructions.js"></script>
 <script src="js/flMain.js"></script>
 <script src="js/flConf.js"></script>
-<script>$('#button').one('click', function(event){
-		$('form').hide();
-		init($('form').serializeArray());
-	});</script>
-</html>
+<script>
+    $('.instruct').hide();
+    $('#preloadPane').hide();
+    $('#preload').one('click',function(e)
+    {
+        $('#preload').hide();
+        $('#mediaPane').prepend('<img src="img/loading.gif" id="loading"/>');
+        preload(videos, function()
+        {
+            $('#preloadPane').get(0).pause();
+            $('#preloadPane').hide();
+            $('#loading').hide();
+            
+            $('#mediaPane').append('<a href="#" id="begin">Video Preload complete.... click to begin experiment</a>');
+            $('#begin').one('click', function(e){
+                $('#begin').hide();
+                $('.instruct').show();
+            });
+            
+        });
+    });
+    $('#button').on('click', function(event){
+        if(formValidate($('form')))
+        {
+            $('form').hide();
+            init($('form').serializeArray());
+        }
+
+    });</script>
+    </html>

@@ -20,14 +20,14 @@ div {
 img {
   position:absolute;
 }
-:root:before {
+/*:root:before {
   content: url(../videos/fr_vid1.mp4)
   url(../videos/fr_vid2.mp4)
   url(../videos/fr_vid3.mp4)
   url(../videos/nm_vid1.mp4)
   url(../videos/nm_vid2.mp4)
   url(../videos/nm_vid3.mp4);
-}
+}*/
 #mediaPane
 {
   border-style: solid;
@@ -40,7 +40,7 @@ img {
   left: 0;
   width: 80%;
   height: 80%;
-  overflow: auto;
+  overflow: hidden;
 }
 
 
@@ -79,4 +79,8 @@ img {
   font-family: "Courier New";
   z-index:10;
 
+}
+#preloadPane
+{
+  /*visibility: hidden;*/
 }

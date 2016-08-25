@@ -251,8 +251,6 @@ function post(trial, callback)
 
 	$(image1).show();
 	$(image2).show();
-	randomize(image1);
-	randomize(image2);
 	$(image1).on('click', function() {
 		events.push({action :'click', image: 'left', time : Date.now() - timeBegin, clickNumber: ++clicks, imageSrc:$(image1).get(0).src});
 	});
@@ -324,7 +322,6 @@ function choice(trial, callback)
 function click(media, maxClicks, callback)
 {
 	$(media).show();
-	randomize(media);
 	var randMaxClicks = maxClicks - Math.floor(maxClicks * Math.random());
 	var currentClicks = 0;
 	var events = [];
@@ -356,9 +353,13 @@ function reward(videos, callback)
 		// if videos is an array choose a random one
 		video = videos[Math.floor(Math.random() *  videos.length)]; 
 	}
-	console.log($(video));
 	$(video).show();
 	$(video).get(0).play();
+	//$(video).show();
+	$(video).on('canplaythrough', function()
+	{
+		$(video).show();
+	});
 		//console.log(trial.media.videos[0]);
 		$(video).one('ended',function(){
 			events.push({action :'videoComplete', time : Date.now() - timeBegin});
@@ -396,6 +397,7 @@ function reward(videos, callback)
 			newVideo.src = "videos/" + vids.files[i];
 			newVideo.id = id + "_" + i;
 			newVideo.className = 'rewardVid';
+			newVideo.poster = "/img/poster.gif";
 			console.log(' new video created' , newVideo);
 			$('#mediaPane').append(newVideo);
 			$('#' + newVideo.id).hide();
@@ -409,60 +411,95 @@ function reward(videos, callback)
 		var newImage = document.createElement('img');
 		newImage.src = "img/" + image;
 		newImage.id = id;
-		$('#mainContainer').append(newImage);
-		$('#' + id).hide();
-		return newImage;
-	}
-	function randomize(item)
-	{
 		var offset =0;
-		if(item.id === 'rightImage')
+		if(id === 'rightImage')
 		{
 			offset = sideWidth;
 		}
-	//console.log('right', item);
-	$(item).css({left: Math.floor(Math.random() * (sideWidth - imageWidth)) + offset , top:Math.floor(Math.random() * (sideHeight - imageHeight))});
-}
-
-
-function buildInitialRes(left, right)
-{
-	var results = {};
-	results.left = {
-		side: 'Left',
-		image: images[left.imageIndex],
-		videos: videos[left.videosIndex]
-	};
-	results.right = 
-	{
-		side: 'Right',
-		image: images[right.imageIndex],
-		videos: videos[right.videosIndex]
-	};
-	results.trials = [];
-	if(DEBUG)
-		console.log('intial results', results);
-	return results;
-}
-
-function checkVideoSupported()
-{
-	var canPlay = false;
-	var v = document.createElement('video');
-	if(v.canPlayType && v.canPlayType('video/mp4').replace(/no/, '')) {
-		canPlay = true;
+		$('#mainContainer').append(newImage);
+		$(newImage).css({left:  (sideWidth - imageWidth) / 2 + offset , top:(sideHeight - imageHeight)/2});
+		$('#' + id).hide();
+		return newImage;
 	}
-	return canPlay;
-}
+	function resize()
+	{
+		sideWidth = $('#mainContainer').width() / 2; 
+		sideHeight = $('#mainContainer').height();
+		
+		$('#rightImage').css({left:  (sideWidth - imageWidth) / 2 + sideWidth , top:(sideHeight - imageHeight)/2});
+		$('#leftImage').css({left:  (sideWidth - imageWidth) / 2 , top:(sideHeight - imageHeight)/2});
+	}
 
-function parseForm(subjectDetailsUnparsed)
-{
-	return {
-		dob: subjectDetailsUnparsed[0].value,
-		age: subjectDetailsUnparsed[1].value,
-		gender: subjectDetailsUnparsed[2].value,
-		languages: subjectDetailsUnparsed[3].value,
-		sequenceNo: subjectDetailsUnparsed[4].value,
-		comments: subjectDetailsUnparsed[5].value
-	};
-}
+
+	function buildInitialRes(left, right)
+	{
+		var results = {};
+		results.left = {
+			side: 'Left',
+			image: images[left.imageIndex],
+			videos: videos[left.videosIndex]
+		};
+		results.right = 
+		{
+			side: 'Right',
+			image: images[right.imageIndex],
+			videos: videos[right.videosIndex]
+		};
+		results.trials = [];
+		if(DEBUG)
+			console.log('intial results', results);
+		return results;
+	}
+
+	function checkVideoSupported()
+	{
+		var canPlay = false;
+		var v = document.createElement('video');
+		if(v.canPlayType && v.canPlayType('video/mp4').replace(/no/, '')) {
+			canPlay = true;
+		}
+		return canPlay;
+	}
+
+	function parseForm(subjectDetailsUnparsed)
+	{
+		return {
+			dob: subjectDetailsUnparsed[0].value,
+			age: subjectDetailsUnparsed[1].value,
+			gender: subjectDetailsUnparsed[2].value,
+			languages: subjectDetailsUnparsed[3].value,
+			sequenceNo: subjectDetailsUnparsed[4].value,
+			comments: subjectDetailsUnparsed[5].value
+		};
+	}
+	function preload(videos, callback)
+	{
+		loadVid(videos, 0,0, callback);
+	}
+
+	function loadVid(vids, x ,y, callback)
+	{
+		if(x ==  videos.length)
+		{
+			callback();
+		}
+		else
+		{
+			$('#preloadPane').attr('src', "videos/" + videos[x].files[y]);
+			$('#preloadPane').get(0).play();
+			$('#preloadPane').one('canplaythrough', function(e)
+			{
+				console.log("videos/" + videos[x].files[y] + " loaded");
+				if(y + 1 === videos[x].files.length)
+				{
+					loadVid(vids,  ++x, 0, callback);
+				}
+				else
+				{
+					loadVid(vids,  x, ++y, callback);
+				}
+				
+			});
+		}
+	}
+	$(window).on('resize', resize);
