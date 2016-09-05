@@ -1,0 +1,23 @@
+{
+  "name": "childDevaluation",
+  "homepage": "https://github.com/kujo4pm/functionalLearning",
+  "authors": [
+    "Kurt <kujo4pm@gmail.com>"
+  ],
+  "description": "This is a child devaluation experiment for the University of Sydney",
+  "main": "index.html",
+  "keywords": [
+    "psychology"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^3.1.0"
+  }
+}

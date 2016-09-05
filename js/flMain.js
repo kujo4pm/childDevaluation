@@ -76,7 +76,7 @@ function init(subjectDetailsUnparsed)
 	and the corresponding videos will play. During this time, it should 
 	vary randomly from 1 to 5 touches for the video to play.
 	*/
-	var choicePhaseInitial = {phaseName: 'choice', trials:[{type:'choice', media: [{
+	var choicePhaseInitial = {phaseName: 'Choice', trials:[{type:'choice', media: [{
 		type: 'click',
 		media: leftMedia,
 		clicks: 5
@@ -131,14 +131,14 @@ function init(subjectDetailsUnparsed)
 
 
 		var timeLineBuild = [
-		intro,
+		/*intro,
 		warmUpPhase, 
 		singleActionPhaseA, 
-		singleActionPhaseB, 
-		choicePhaseInitial, 
+		singleActionPhaseB, */
+		choicePhaseInitial /*, 
 		outcomeDevaluation, 
 		postDeval, 
-		choicePhasePD, conclusion];
+		choicePhasePD, conclusion*/];
 		var timeline = timeLineBuild ;
 		var results = buildInitialRes(left, right);
 		results.subjectDetails = subjectDetails;
@@ -149,30 +149,38 @@ function init(subjectDetailsUnparsed)
 
 		runPhase(timeline, phase, results, function(results)
 		{
-			console.log(res);
 			$('#mediaPane').show();
-			$('#mediaPane').html('<pre>' + JSON.stringify(res,  null, '\t') + '</pre>');
-			console.log("results:", JSON.stringify(res,  null, '\t'));
+
+			$('#mediaPane').html(resultsPage(results));
+			if(DEBUG)
+			{
+				console.log("results:", JSON.stringify(results,  null, '\t'));
+			}
+			uploadFiles(results);
+
+
 		});
 	//begin trial
 	function runPhase(timeline, phase, results, callback)
 	{
-		runTrials(timeline[phase].trials, 0, results, function(res)
+		if(phase >= timeline.length)
+		{
+			return callback(results);
+		}
+		runTrials(timeline[phase].trials, 0, timeline[phase].phaseName, results, function(res)
 		{	
 			phase++;
-			if(DEBUG)
+			if(DEBUG && phase < timeline.length)
 			{
 				$('#phase').text("#"+ phase + " " + timeline[phase].phaseName);
 				$('#jsonRes').val($('#jsonRes').val() + "\nRESULTS #"+ phase + "for phase:" + timeline[phase].phaseName + JSON.stringify(results,  null, '\t'));
 			}
 			return runPhase(timeline, phase, results, callback);
 		});
-
-		
 	}
 	
 }
-function runTrials(currentPhase, i, results, next)
+function runTrials(currentPhase, i, phaseName, results, next)
 {
 	var trial = currentPhase[i];
 	if(i >= currentPhase.length)
@@ -185,14 +193,14 @@ function runTrials(currentPhase, i, results, next)
 	{
 		$('#mainContainer').css("background-color", trial.backgroundColour);
 	}
-	var trialData = {trialIndex: i, type: currentPhase[i].type, timeStart: Date.now() - timeBegin};
+	var trialData = {phase: phaseName, trialIndex: i, type: currentPhase[i].type, timeStart: Date.now() - timeBegin};
 	console.log("current trial:", trial);
 	if(trial.type === 'post')
 	{
 		post(trial, function(events){
 			trialData.events = events; 
 			results.trials.push(trialData);
-			return runTrials(currentPhase, ++i, results, next);
+			return runTrials(currentPhase, ++i, phaseName, results, next);
 		});
 	}
 	if(trial.type === 'choice')
@@ -201,7 +209,7 @@ function runTrials(currentPhase, i, results, next)
 			trialData.events = events; 
 			results.trials.push(trialData);
 			scrub(trial);
-			return runTrials(currentPhase, ++i, results, next);
+			return runTrials(currentPhase, ++i, phaseName, results, next);
 		});
 	}
 	if(trial.type === 'click')
@@ -209,7 +217,7 @@ function runTrials(currentPhase, i, results, next)
 		click(trial.media.image, trial.clicks, function(events){
 			trialData.events = events; 
 			results.trials.push(trialData);
-			return runTrials(currentPhase, ++i, results, next);
+			return runTrials(currentPhase, ++i, phaseName, results, next);
 		});
 	}
 	if(trial.type === 'reward')
@@ -217,7 +225,7 @@ function runTrials(currentPhase, i, results, next)
 		reward(trial.media.videos, function(events){
 			trialData.events = events;
 			results.trials.push(trialData);
-			return runTrials(currentPhase, ++i, results, next);
+			return runTrials(currentPhase, ++i, phaseName, results, next);
 		});
 	}
 	if(trial.type === 'text')
@@ -225,12 +233,12 @@ function runTrials(currentPhase, i, results, next)
 		text(trial.media, i, function(events){
 			trialData.events = events;
 			results.trials.push(trialData);
-			return runTrials(currentPhase, ++i, results, next);
+			return runTrials(currentPhase, ++i, phaseName, results, next);
 		});
 	}
 	if(trial.type === 'pause')
 	{
-		setTimeout(function() {runTrials(currentPhase, ++i, results, next);}, 1000 * trial.timeoutSeconds);
+		setTimeout(function() {runTrials(currentPhase, ++i, phaseName, results, next);}, 1000 * trial.timeoutSeconds);
 	}
 
 }
@@ -283,6 +291,7 @@ function scrubMedia(trial)
 	for(var x = 0; x < trial.media.length; x++)
 	{
 		$(trial.media[x].media.image).hide();
+		$(trial.media[x].media.videos).get(0).pause();
 		$(trial.media[x].media.videos).hide();
 	}
 }
@@ -294,7 +303,7 @@ function choice(trial, callback)
 	setTimeout(function() {
 		console.log("final:", eventsFinal);
 		callback( eventsFinal);
-	}, 60 * 100 * trial.timeoutMinutes);
+	}, 60 * 10 * trial.timeoutMinutes);
 	var leftMed = trial.media[0];
 	var rightMed = trial.media[1];
 	var repeater = function()
@@ -503,3 +512,242 @@ function reward(videos, callback)
 		}
 	}
 	$(window).on('resize', resize);
+	function formValidate(form)
+	{
+		var message = "";
+		if(	form.children(' input[name="dob"]').val() == ""	||
+			form.children(' input[name="age"]').val() == ""	||
+			form.children(' input[name="gender"]').val() == ""||
+			form.children(' input[name="lang"]').val() == ""	||
+			form.children(' input[name="sequence"]').val() == "")
+		{
+			message += "Please include a value for each field";
+		}
+		return message;
+
+	}
+
+	function saveResults(res)
+	{
+		var resText = '';
+		resText += 'Subject Details\n';
+
+		resText += parseObj(res.subjectDetails, {showHeader:true});
+		resText  += '\n\n\n\n';
+
+		resText += 'Media File config\n';
+		resText += parseObj(res.left, {showHeader:true});
+		resText += parseObj(res.right, {showHeader:false});
+		resText  += '\n\n\n\n';
+
+		resText += 'Trial Results\n';
+
+		resText += parseObj(res.trials, {showHeader:true});
+
+	//console.log(JSON.flatten(testRes));
+	function parseObj(obj, options)
+	{
+		if(typeof options === 'undefined' )
+		{
+			options = {};
+		}
+		if(typeof options.showHeader === 'undefined' )
+		{
+			options.showHeader = false;
+		}
+		var resText = '';
+		if(Array.isArray(obj))
+		{
+			if(options.showHeader)
+			{
+				var headers = [];
+				for(var x =0; x < obj.length; x ++ )
+				{
+					var currentFlatObj = flatten(obj[x]);
+					var y = 0;
+					for(var propt in currentFlatObj)
+					{
+						if(y >= headers.length)
+						{
+							//console.log('adding', getLastProp(propt));
+							headers.push(getLastProp(propt));
+						}
+						else if(!(headers[y].lastIndexOf(getLastProp(propt)) == 0 || 
+							headers[y].lastIndexOf("/" + getLastProp(propt)) > 0))
+						{
+							headers[y] += "/" + getLastProp(propt);
+
+						}
+						y++;
+					}
+				}
+				for(var z  = 0; z < headers.length; z++)
+				{
+					resText+= headers[z] + ",";
+				}
+				resText +="\n";
+				
+			}
+			for(var x =0; x < obj.length; x ++ )
+			{
+				resText += parseObj(flatten(obj[x]));
+			}
+			//console.log(resText);
+			return resText;
+
+		}
+		else
+		{
+			obj = flatten(obj);
+			if(options.showHeader)
+			{
+				for(var propt in obj){
+					resText  += propt + ',';
+				}
+				resText  += '\n';
+			}		
+			for(var propt in obj){
+				resText  += obj[propt] + ',';
+			}
+			resText  += '\n';
+			return resText;
+		}
+		function getLastProp(str)
+		{
+			return propt.lastIndexOf('.') != -1 ? propt.slice(propt.lastIndexOf('.') + 1) : propt;
+		}
+		function flatten(data) {
+			var result = {};
+			function recurse (cur, prop) {
+				if (Object(cur) !== cur) {
+					result[prop] = cur;
+				} else if (Array.isArray(cur)) {
+					for(var i=0, l=cur.length; i<l; i++)
+						recurse(cur[i], prop + "." + i);
+					if (l == 0)
+						result[prop] = [];
+				} else {
+					var isEmpty = true;
+					for (var p in cur) {
+						isEmpty = false;
+						recurse(cur[p], prop ? prop+"."+p : p);
+					}
+					if (isEmpty && prop)
+						result[prop] = {};
+				}
+			}
+			recurse(data, "");
+			return result;
+		}
+	}
+	return resText;
+}
+
+function buildFilename(res)
+{
+	var today = new Date();
+	return res.subjectDetails.gender.toLowerCase() + "-" + res.subjectDetails.age + "-" + today.getFullYear() + "-" + today.getMonth() + "-" + today.getDate() + '--' + today.getTime() ;
+}
+
+ /**
+ * Called when the client library is loaded to start the auth flow.
+ */
+ function handleClientLoad() {
+ 	$('#jsonRes').val($('#jsonRes').val() + 'Client library loaded...\n');
+ 	window.setTimeout(checkAuth, 1);
+ }
+	/**
+	* Check if the current user has authorized the application.
+	*/
+	function checkAuth() {
+		$('#jsonRes').val($('#jsonRes').val() + 'Checking application authorization...\n');
+		gapi.auth.authorize(
+			{'client_id': authenticate.CLIENT_ID, 'scope': authenticate.SCOPES, 'immediate': true},
+			handleAuthResult);
+	}
+	/**
+	* Called when authorization server replies.
+	*
+	* @param {Object} authResult Authorization result.
+	*/
+	function handleAuthResult(authResult) {
+		$('#jsonRes').val($('#jsonRes').val() + 'Handling authorization result...\n');
+		var authButton = document.getElementById('authButton');
+		var preloadButton = document.getElementById('preloadVidsButton');
+		authButton.style.display = 'none';
+		preloadButton.style.display = 'none';
+		if (authResult && !authResult.error) {
+			$('#jsonRes').val($('#jsonRes').val() + 'Authorized...\n');
+			// Access token has been successfully retrieved, requests can be sent to the API.
+			$('#auth').append('Google account authorized...');
+			preloadButton.style.display = 'block';
+		} else {
+			$('#jsonRes').val($('#jsonRes').val() + 'Not yet authorized...\n');
+			// No access token could be retrieved, show the button to start the authorization flow.
+			authButton.style.display = 'block';
+			authButton.onclick = function() {
+				gapi.auth.authorize(
+					{'client_id': authenticate.CLIENT_ID, 'scope': authenticate.SCOPES, 'immediate': false},
+					handleAuthResult);
+			};
+		}
+	}
+  /**
+       * Start the file upload.
+       *
+       * @param {Object} evt Arguments from the file selector.
+       */
+       function uploadFiles(results) {
+       	gapi.client.load('drive', 'v2', function() {
+       		insertFile(results, {mode:'csv'});
+       		insertFile(results, {mode:'json'});
+       	});
+       }
+      /**
+       * Insert new file.
+       */
+       function insertFile(results, options) {
+       	var resText;
+       	if(options.mode === 'csv')
+       	{
+       		resText = saveResults(results);
+       	}
+       	else
+       	{
+       		resText =  JSON.stringify(results,  null, '\t');
+       	}
+       	const boundary = '-------314159265358979323846264';
+       	const delimiter = "\r\n--" + boundary + "\r\n";
+       	const close_delim = "\r\n--" + boundary + "--";
+       	var appState = '';
+       	var fileName = buildFilename(results)+'.' + (options.mode || 'txt');
+       	var contentType = 'application/json';
+       	var metadata = {
+       		'title': fileName,
+       		'mimeType': contentType,
+       		'parents': [{'id': authenticate.FOLDER_ID }]
+       	};
+       	var base64Data = btoa(resText);
+       	var multipartRequestBody =
+       	delimiter +
+       	'Content-Type: application/json\r\n\r\n' +
+       	JSON.stringify(metadata) +
+       	delimiter +
+       	'Content-Type: ' + contentType + '\r\n' +
+       	'Content-Transfer-Encoding: base64\r\n' +
+       	'\r\n' +
+       	base64Data +
+       	close_delim;
+       	var request = gapi.client.request({
+       		'path': '/upload/drive/v2/files',
+       		'method': 'POST',
+       		'params': {'uploadType': 'multipart'},
+       		'headers': {
+       			'Content-Type': 'multipart/mixed; boundary="' + boundary + '"'
+       		},
+       		'body': multipartRequestBody});
+       	request.execute(function(arg) {
+       		
+       		console.log(arg);
+       	});
+       }

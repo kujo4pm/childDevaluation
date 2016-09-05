@@ -9,11 +9,14 @@
 #To do
 
 * build test framework
-* Set background colours
-* randomly choose from array of videos
-* randomly get the set of clicks
-* get preloading working
-* check it 
+* Insert data into Google Spreadsheet
+* Check Application cache manifest deprication - service worker
+
+#Handover
+* Fix times for sessions
+* Explain hierarchy - phase, trials, events
+* put the correct referral IP in google API manager
+* reinsert cache attribute
 
 
 

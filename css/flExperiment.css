@@ -27,60 +27,96 @@ img {
   url(../videos/nm_vid1.mp4)
   url(../videos/nm_vid2.mp4)
   url(../videos/nm_vid3.mp4);
-}*/
-#mediaPane
-{
-  border-style: solid;
-  border-width: 1px;
-  position: absolute;
-  margin: auto;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  width: 80%;
-  height: 80%;
-  overflow: hidden;
-}
+  }*/
+  #mediaPane
+  {
+    border-style: solid;
+    border-width: 1px;
+    position: absolute;
+    margin: auto;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 80%;
+    height: 80%;
+    overflow: hidden;
+  }
 
 
-.rewardVid
-{
-  position: absolute;
-  margin: auto;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-}
-.instruct
-{
-  margin:5px;
-}
+  .rewardVid
+  {
+    position: absolute;
+    margin: auto;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+  .instruct
+  {
+    margin:5px;
+  }
 
-.warning
-{
-  color: red;
-  font-size: 1.2em;
-}
+  .warning
+  {
+    color: red;
+    font-size: 1.2em;
+  }
 
-#jsonRes
-{
-  position: fixed;
-  bottom:0px;
-  right:0px;
-  width:100%;
-  height:100px;
-  float:right;
-}
+  #jsonRes
+  {
+    position: fixed;
+    bottom:0px;
+    right:0px;
+    width:100%;
+    height:100px;
+    float:right;
+  }
 
-.debug
-{
-  font-family: "Courier New";
-  z-index:10;
+  .debug
+  {
+    font-family: "Courier New";
+    z-index:10;
 
+  }
+  #preloadPane
+  {
+    /*visibility: hidden;*/
+  }
+  .important
+  {
+    color: #990000;
+  }
+  #loading
+  {
+    position: absolute;
+    margin: auto;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+
+  .adminButton {
+  background-color:#44c767;
+  -moz-border-radius:28px;
+  -webkit-border-radius:28px;
+  border-radius:28px;
+  border:1px solid #18ab29;
+  display:inline-block;
+  cursor:pointer;
+  color:#ffffff;
+  font-family:Arial;
+  font-size:17px;
+  padding:16px 31px;
+  text-decoration:none;
+  text-shadow:0px 1px 0px #2f6627;
 }
-#preloadPane
-{
-  /*visibility: hidden;*/
+.adminButton:hover {
+  background-color:#5cbf2a;
+}
+.adminButton:active {
+  position:relative;
+  top:1px;
 }
