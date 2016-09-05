@@ -27,7 +27,7 @@ var videos = [ {
 }];
 
 
-var DEBUG =true;
+var DEBUG =false;
 
 var GREY = '#c2c2a3';
 var BLUE = '#99ccff';

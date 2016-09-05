@@ -84,7 +84,7 @@ function init(subjectDetailsUnparsed)
 		type: 'click',
 		media: rightMedia,
 		clicks: 5
-	}], timeoutMinutes: 7, backgroundColour: GREY }]};
+	}], timeoutMinutes: 7, minVideos:DEBUG ? 2 : 9, backgroundColour: GREY }]};
 
 	/*
 		Outcome devaluation
@@ -127,18 +127,18 @@ function init(subjectDetailsUnparsed)
 			type: 'click',
 			media: rightMedia,
 			clicks: 5
-		}], timeoutMinutes: 7, backgroundColour: GREY }]};
+		}], timeoutMinutes: 7, minVideos: DEBUG ? 2 : 9, backgroundColour: GREY }]};
 
 
 		var timeLineBuild = [
-		/*intro,
+		intro,
 		warmUpPhase, 
 		singleActionPhaseA, 
-		singleActionPhaseB, */
-		choicePhaseInitial /*, 
+		singleActionPhaseB, 
+		choicePhaseInitial, 
 		outcomeDevaluation, 
 		postDeval, 
-		choicePhasePD, conclusion*/];
+		choicePhasePD, conclusion];
 		var timeline = timeLineBuild ;
 		var results = buildInitialRes(left, right);
 		results.subjectDetails = subjectDetails;
@@ -255,7 +255,7 @@ function post(trial, callback)
 		$(image2).hide();
 		$(image2).off();
 		callback(events);
-	}, 100 * 60 * trial.timeoutMinutes);
+	}, 1000 * 60 * trial.timeoutMinutes / (DEBUG ? 100 : 1));
 
 	$(image1).show();
 	$(image2).show();
@@ -300,12 +300,21 @@ function scrubMedia(trial)
 function choice(trial, callback)
 {
 	var eventsFinal = [];
-	setTimeout(function() {
-		console.log("final:", eventsFinal);
-		callback( eventsFinal);
-	}, 60 * 10 * trial.timeoutMinutes);
+	var timeUp = false;
+	var timeout = setTimeout(function() {
+		if(DEBUG)
+		{
+			console.log('Phase Timed Out and video played ' + rewards + " times");
+			timeUp = true;
+		}
+		if(rewards >= trial.minVideos)
+		{
+			callback( eventsFinal);
+		}		
+	}, 60 * 1000 * trial.timeoutMinutes  / (DEBUG ? 100 : 1));
 	var leftMed = trial.media[0];
 	var rightMed = trial.media[1];
+	var rewards = 0;
 	var repeater = function()
 	{
 		scrubEvents(trial);
@@ -314,6 +323,10 @@ function choice(trial, callback)
 			eventsFinal = eventsFinal.concat(tc1);
 			reward(leftMed.media.videos, function(tr1){
 				eventsFinal = eventsFinal.concat(tr1);
+				if(++rewards >= trial.minVideos && timeUp)
+				{
+					return callback( eventsFinal);
+				}
 				return repeater([]);
 			});
 		});
@@ -322,7 +335,11 @@ function choice(trial, callback)
 			eventsFinal = eventsFinal.concat(tc2);
 			reward(rightMed.media.videos, function(tr2){
 				eventsFinal = eventsFinal.concat(tr2);
-				repeater([]);
+				if(++rewards >= trial.minVideos && timeUp)
+				{
+					return callback( eventsFinal);
+				}
+				return repeater([]);
 			});
 		});
 	};
@@ -747,7 +764,7 @@ function buildFilename(res)
        		},
        		'body': multipartRequestBody});
        	request.execute(function(arg) {
-       		
-       		console.log(arg);
+       		$('#jsonRes').val($('#jsonRes').val() + 'Results Uploaded to url:' + arg.downloadUrl);
+
        	});
        }

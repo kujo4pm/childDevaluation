@@ -9,7 +9,6 @@
 #To do
 
 * build test framework
-* Insert data into Google Spreadsheet
 * Check Application cache manifest deprication - service worker
 
 #Handover
