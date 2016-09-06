@@ -50,9 +50,9 @@
     {
         SHAKES = $('input[name="shakes"]:checked').val() === "true";
         DEBUG = $('input[name="debug"]:checked').val() === "true";
-        if(DEBUG)
+        if(!DEBUG)
         {
-          $(".debug").show();
+          $(".debug").hide();
         }
         $('#auth').hide();
         $('#mediaPane').prepend('<img src="img/loading.gif" id="loading"/>');
