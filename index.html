@@ -1,9 +1,11 @@
 <!doctype html>
-<html manifestREMOVE="video.manifest">
+<html manifest11="video.manifest">
 <head>
-    <title>My experiment</title>
-    <script src="http://192.168.1.101:8080/target/target-script-min.js#anonymous"></script>
+    <title>Devaluation Experiment</title>
+    <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+    <!--script src="http://192.168.1.101:8080/target/target-script-min.js#anonymous"></script-->
     <script src="bower_components/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="js/jquery.longclick-min.js"></script>
     <link href="css/flExperiment.css" rel="stylesheet" type="text/css"></link>
 </head>
 <body>
@@ -18,7 +20,7 @@
         <video id="preloadPane"></video>
         <form name="introForm" class="instruct">
           <h3>Please enter in the subject's details:</h3>
-          D.O.B*:<br><input type="text" name="dob"> <br>
+          D.O.B* (YYYY/MM/DD):<br><input type="text" name="dob"> <br>
           Age*:<br><input type="text" name="age"> <br>
           Gender*:<br><input type="radio" name="gender" value="male" checked> Male<br>
           <input type="radio" name="gender" value="female"> Female<br>

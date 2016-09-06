@@ -130,19 +130,11 @@ function init(subjectDetailsUnparsed)
 		}], timeoutMinutes: 7, minVideos: DEBUG ? 2 : 9, backgroundColour: GREY }]};
 
 
-		var timeLineBuild = [
-		intro,
-		warmUpPhase, 
-		singleActionPhaseA, 
-		singleActionPhaseB, 
-		choicePhaseInitial, 
-		outcomeDevaluation, 
-		postDeval, 
-		choicePhasePD, conclusion];
-		var timeline = timeLineBuild ;
-		var results = buildInitialRes(left, right);
-		results.subjectDetails = subjectDetails;
-		timeBegin = Date.now();
+		var timeLineBuild = [ /*intro, warmUpPhase,  singleActionPhaseA,
+		singleActionPhaseB,  choicePhaseInitial, */ outcomeDevaluation,
+		postDeval,  choicePhasePD, conclusion]; var timeline = timeLineBuild ;
+		var results = buildInitialRes(left, right); results.subjectDetails =
+		subjectDetails; timeBegin = Date.now();
 
 		var phase = 0;	
 
@@ -251,9 +243,9 @@ function post(trial, callback)
 	var events = [];
 	setTimeout(function() {
 		$(image1).hide();
-		$(image1).off();
+		$(image1).off('click');
 		$(image2).hide();
-		$(image2).off();
+		$(image2).off('click');
 		callback(events);
 	}, 1000 * 60 * trial.timeoutMinutes / (DEBUG ? 100 : 1));
 
@@ -281,8 +273,8 @@ function scrubEvents(trial)
 {
 	for(var x = 0; x < trial.media.length; x++)
 	{
-		$(trial.media[x].media.image).off();
-		$(trial.media[x].media.videos).off();
+		$(trial.media[x].media.image).off('click');
+		$(trial.media[x].media.videos).off('click');
 	}
 }
 
@@ -444,6 +436,7 @@ function reward(videos, callback)
 		}
 		$('#mainContainer').append(newImage);
 		$(newImage).css({left:  (sideWidth - imageWidth) / 2 + offset , top:(sideHeight - imageHeight)/2});
+		$(newImage).longclick(250, longClickHandler);
 		$('#' + id).hide();
 		return newImage;
 	}
@@ -538,7 +531,16 @@ function reward(videos, callback)
 			form.children(' input[name="lang"]').val() == ""	||
 			form.children(' input[name="sequence"]').val() == "")
 		{
-			message += "Please include a value for each field";
+			message += "Please include a value for each field\n";
+		}
+		console.log(Date.parse(form.children(' input[name="dob"]').val()));
+		if( isNaN(Date.parse(form.children(' input[name="dob"]').val())))
+		{
+			message += "Please include a valid DOB in the format of YYYY/MM/DD\n";
+		}
+		if(isNaN(parseInt(form.children(' input[name="age"]').val())))
+		{
+			message += "Include Age as whole numbers\n";
 		}
 		return message;
 
@@ -768,3 +770,9 @@ function buildFilename(res)
 
        	});
        }
+
+	function longClickHandler(e)
+	{
+		e.preventDefault();
+		$("body").append("<p>You longclicked. Nice!</p>");
+	}
