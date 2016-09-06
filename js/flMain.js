@@ -730,6 +730,10 @@ function buildFilename(res)
 			$('#jsonRes').val($('#jsonRes').val() + 'Not yet authorized...\n');
 			// No access token could be retrieved, show the button to start the authorization flow.
 			authButton.style.display = 'block';
+			if(navigator.userAgent.match('CriOS'))
+			{
+				$('#auth').append('<a href="index.html">Click here to refresh when logged in with Google</a>');
+			}
 			authButton.onclick = function() {
 				gapi.auth.authorize(
 					{'client_id': authenticate.CLIENT_ID, 'scope': authenticate.SCOPES, 'immediate': false},
