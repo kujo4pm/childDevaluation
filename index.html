@@ -3,9 +3,7 @@
 <head>
     <title>Devaluation Experiment</title>
     <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
-    <!--script src="http://192.168.1.101:8080/target/target-script-min.js#anonymous"></script-->
     <script src="bower_components/jquery/dist/jquery.min.js"></script>
-    <script type="text/javascript" src="js/jquery.longclick-min.js"></script>
     <link href="css/flExperiment.css" rel="stylesheet" type="text/css"></link>
 </head>
 <body>
@@ -15,7 +13,9 @@
            <div id="auth">
             <h1>Experiment preparation:</h1>
             <input type="button" class="adminButton" id="preloadVidsButton" style="display: none" value="Begin preloading videos..."/> <br>
-            <input type="button" class="adminButton" id="authButton" style="display: none" value="Authorize Google Account" />
+            <input type="button" class="adminButton" id="authButton" style="display: none" value="Authorize Google Account" /> <br>
+            Butterfly Shakes when Touched: <input type="checkbox" name="shakes" value="true" checked> <br>
+            Debug Mode: <input type="checkbox" name="debug" value="true" unchecked> <br>
         </div>
         <video id="preloadPane"></video>
         <form name="introForm" class="instruct">
@@ -44,8 +44,16 @@
 <script>
     $('.instruct').hide();
     $('#preloadPane').hide();
+    $(".debug").hide();
     $('#preloadVidsButton').one('click',function(e)
     {
+        SHAKES = $('input[name="shakes"]:checked').val() === "true";
+        DEBUG = $('input[name="debug"]:checked').val() === "true";
+        fullScreen();
+        if(DEBUG)
+        {
+          $(".debug").show();
+        }
         $('#auth').hide();
         $('#mediaPane').prepend('<img src="img/loading.gif" id="loading"/>');
         preload(videos, function()

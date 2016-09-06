@@ -97,12 +97,7 @@ function init(subjectDetailsUnparsed)
 
 
 		var outcomeDevaluation = {phaseName: 'Outcome devaluation', trials:[
-		{type: 'reward', media: { videos: outcomeMedia[0]}, backgroundColour: BLUE},
-		{type: 'pause', timeoutSeconds: 3},
-		{type: 'reward', media: { videos: outcomeMedia[1]} },
-		{type: 'pause', timeoutSeconds: 3},
-		{type: 'reward', media: { videos: outcomeMedia[2]}}
-		]};
+		{type: 'reward', media: { videos: outcomeMedia}, backgroundColour: BLUE, randomPick: false, timeoutSeconds: 3}]};
 
 	/*
 		Post-devaluation extinction test 
@@ -130,9 +125,9 @@ function init(subjectDetailsUnparsed)
 		}], timeoutMinutes: 7, minVideos: DEBUG ? 2 : 9, backgroundColour: GREY }]};
 
 
-		var timeLineBuild = [ /*intro, warmUpPhase,  singleActionPhaseA,
-		singleActionPhaseB,  choicePhaseInitial, */ outcomeDevaluation,
-		postDeval,  choicePhasePD, conclusion]; var timeline = timeLineBuild ;
+		var timeLineBuild = [ intro, warmUpPhase, singleActionPhaseA,
+		singleActionPhaseB,  choicePhaseInitial,  outcomeDevaluation,
+		postDeval,  choicePhasePD]; var timeline = timeLineBuild ;
 		var results = buildInitialRes(left, right); results.subjectDetails =
 		subjectDetails; timeBegin = Date.now();
 
@@ -214,7 +209,7 @@ function runTrials(currentPhase, i, phaseName, results, next)
 	}
 	if(trial.type === 'reward')
 	{
-		reward(trial.media.videos, function(events){
+		reward(trial.media.videos, {randomPick: trial.randomPick, timeoutSeconds: trial.timeoutSeconds}, function(events){
 			trialData.events = events;
 			results.trials.push(trialData);
 			return runTrials(currentPhase, ++i, phaseName, results, next);
@@ -247,14 +242,18 @@ function post(trial, callback)
 		$(image2).hide();
 		$(image2).off('click');
 		callback(events);
-	}, 1000 * 60 * trial.timeoutMinutes / (DEBUG ? 100 : 1));
+	}, 1000 * 60 * trial.timeoutMinutes / (DEBUG ? 10 : 1));
 
 	$(image1).show();
 	$(image2).show();
 	$(image1).on('click', function() {
+		if(SHAKES)
+			{shakeImage(image1);}
 		events.push({action :'click', image: 'left', time : Date.now() - timeBegin, clickNumber: ++clicks, imageSrc:$(image1).get(0).src});
 	});
 	$(image2).on('click', function() {
+		if(SHAKES)
+			{shakeImage(image2);}
 		events.push({action :'click', image: 'right', time : Date.now() - timeBegin, clickNumber: ++clicks, imageSrc:$(image2).get(0).src});
 	});
 }
@@ -313,7 +312,7 @@ function choice(trial, callback)
 		click(leftMed.media.image, leftMed.clicks, function(tc1){
 			$(rightMed.media.image).hide();
 			eventsFinal = eventsFinal.concat(tc1);
-			reward(leftMed.media.videos, function(tr1){
+			reward(leftMed.media.videos, {}, function(tr1){
 				eventsFinal = eventsFinal.concat(tr1);
 				if(++rewards >= trial.minVideos && timeUp)
 				{
@@ -325,7 +324,7 @@ function choice(trial, callback)
 		click(rightMed.media.image,rightMed.clicks, function(tc2){
 			$(leftMed.media.image).hide();
 			eventsFinal = eventsFinal.concat(tc2);
-			reward(rightMed.media.videos, function(tr2){
+			reward(rightMed.media.videos, {}, function(tr2){
 				eventsFinal = eventsFinal.concat(tr2);
 				if(++rewards >= trial.minVideos && timeUp)
 				{
@@ -347,6 +346,7 @@ function click(media, maxClicks, callback)
 		console.log('clicks:', randMaxClicks, ' from maxClicks:', maxClicks);
 	$(media).on('click', function(event)
 	{
+		if(SHAKES){shakeImage(media);}
 		if(DEBUG && false)
 			console.log('BUTTERFLY clicked:', $(media).get(0).src);
 		events.push({action :'click', time : Date.now() - timeBegin, clickNumber: ++currentClicks, image:$(media).get(0).src});
@@ -359,18 +359,28 @@ function click(media, maxClicks, callback)
 		}
 	});
 }
-function reward(videos, callback)
+function reward(videos, options, callback)
 {
+	options.randomPick = (options.randomPick === undefined) ? true : options.randomPick;
+	options.timeoutSeconds = (options.timeoutSeconds === undefined) ? 0 : options.timeoutSeconds;
 	if(DEBUG && false)
 		console.log('REWARD registered for trial');
 	$('#mediaPane').show();
-	var video = videos;
 	var events = [];
 	if(videos instanceof Array)
 	{
-		// if videos is an array choose a random one
-		video = videos[Math.floor(Math.random() *  videos.length)]; 
+		if(options.randomPick)
+		{
+			// if videos is an array choose a random one
+			videos = [videos[Math.floor(Math.random() *  videos.length)]]; 
+		}
 	}
+	else
+	{
+		videos = [videos];
+	}
+	var index = 0;
+	video = videos[index];
 	$(video).show();
 	$(video).get(0).play();
 	//$(video).show();
@@ -379,12 +389,29 @@ function reward(videos, callback)
 		$(video).show();
 	});
 		//console.log(trial.media.videos[0]);
-		$(video).one('ended',function(){
+		$(video).on('ended',function(){
 			events.push({action :'videoComplete', time : Date.now() - timeBegin});
-			$(video).hide();
-			$('#mediaPane').hide();
-			//results.trials.push(trialData);
-			callback(events);
+			if(++index >= videos.length)
+			{
+				$(video).off('ended');
+				$(video).hide();
+				$('#mediaPane').hide();
+				//results.trials.push(trialData);
+				callback(events);
+			}
+			else
+			{
+				videos[0].src = videos[index].src;
+				if(!options.timeoutSeconds)
+				{
+					$(video).get(0).play();
+				}
+				else
+				{
+					setTimeout(function() {$(video).get(0).play();}, options.timeoutSeconds * 1000);
+				}
+				
+			}
 		});
 	}
 
@@ -436,7 +463,6 @@ function reward(videos, callback)
 		}
 		$('#mainContainer').append(newImage);
 		$(newImage).css({left:  (sideWidth - imageWidth) / 2 + offset , top:(sideHeight - imageHeight)/2});
-		$(newImage).longclick(250, longClickHandler);
 		$('#' + id).hide();
 		return newImage;
 	}
@@ -770,9 +796,38 @@ function buildFilename(res)
 
        	});
        }
+       var ncindex = 0;
+       function clickHandler(e)
+       {
+       	$('#jsonRes').val($('#jsonRes').val() + 'normal CLICK:' + (++ncindex));
+       }
+       function shakeImage(media) {
+       	var l = 20;  
+       	for( var i = 0; i < 4; i++ )   
+       		$( media ).animate( { 
+       			'margin-left': "+=" + ( l = -l ) + 'px',
+       			'margin-right': "-=" + l + 'px'
+       		}, 20);  
 
-	function longClickHandler(e)
-	{
-		e.preventDefault();
-		$("body").append("<p>You longclicked. Nice!</p>");
+       }
+	       function fullScreen()
+	       {
+	       	if (document.fullscreenEnabled || 
+	       		document.webkitFullscreenEnabled || 
+	       		document.mozFullScreenEnabled ||
+	       		document.msFullscreenEnabled
+	       		) {
+	       		var i = document.documentElement;
+	// go full-screen
+	if (i.requestFullscreen) {
+		i.requestFullscreen();
+	} else if (i.webkitRequestFullscreen) {
+		i.webkitRequestFullscreen();
+	} else if (i.mozRequestFullScreen) {
+		i.mozRequestFullScreen();
+	} else if (i.msRequestFullscreen) {
+		i.msRequestFullscreen();
+	}
+
+	}
 	}

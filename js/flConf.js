@@ -1,4 +1,5 @@
 var DEBUG =true;
+var SHAKES =true;
 /*
 ** This is the file to configure the functional learning 
 ** experiment for the Psychology department at the 
@@ -34,7 +35,3 @@ var BLUE = '#99ccff';
 
 var timeBegin;
 
-if(!DEBUG)
-{
-	$(".debug").hide();
-}

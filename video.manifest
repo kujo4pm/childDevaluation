@@ -9,11 +9,9 @@ js/flConf.js
 js/flMain.js
 js/textInstructions.js
 js/authConf.js
-js/jquery.longclick-min.js
 css/flExperiment.css
 bower_components/jquery/dist/jquery.min.js
 img/green_butterfly.gif
 img/red_butterfly.gif
 img/poster.gif
 img/loading.gif
-
