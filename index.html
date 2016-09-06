@@ -16,6 +16,7 @@
             <input type="button" class="adminButton" id="authButton" style="display: none" value="Authorize Google Account" /> <br>
             Butterfly Shakes when Touched: <input type="checkbox" name="shakes" value="true" checked> <br>
             Debug Mode: <input type="checkbox" name="debug" value="true" unchecked> <br>
+            <a href="index.html">Click here to refresh when logged in with google</a>
         </div>
         <video id="preloadPane"></video>
         <form name="introForm" class="instruct">
@@ -44,12 +45,11 @@
 <script>
     $('.instruct').hide();
     $('#preloadPane').hide();
-    $(".debug").hide();
+    $(".debug").show();
     $('#preloadVidsButton').one('click',function(e)
     {
         SHAKES = $('input[name="shakes"]:checked').val() === "true";
         DEBUG = $('input[name="debug"]:checked').val() === "true";
-        fullScreen();
         if(DEBUG)
         {
           $(".debug").show();
